@@ -20,6 +20,14 @@ export const metadata: Metadata = {
   title: "AOUJ | Rise In Your Own Way | Luxury Pakistani Fashion",
   description:
     "Discover AOUJ - Timeless luxury, embroidered pret, festive collections, and children's couture crafted with poetic elegance.",
+  icons: {
+    icon: [
+      { url: "/favicon.ico", sizes: "any" },
+      { url: "/favicon.png", type: "image/png" },
+    ],
+    apple: "/images/aouj-icon-512.png",
+    shortcut: "/favicon.ico",
+  },
   keywords: [
     "AOUJ",
     "Pakistani fashion",

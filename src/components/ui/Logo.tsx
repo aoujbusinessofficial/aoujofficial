@@ -1,5 +1,6 @@
 import React from "react";
 import Link from "next/link";
+import Image from "next/image";
 
 interface LogoProps {
   variant?: "dark" | "light";
@@ -15,46 +16,57 @@ export const Logo: React.FC<LogoProps> = ({
   className = "",
 }) => {
   const isLight = variant === "light";
-  const textColor = isLight ? "text-[#FAF7F2]" : "text-[#151007]";
   const taglineColor = isLight ? "text-[#DBCEBD]" : "text-[#907553]";
   const lineColor = isLight ? "bg-[#907553]/40" : "bg-[#907553]/50";
 
-  const sizeClasses = {
-    sm: "text-2xl tracking-[0.08em]",
-    md: "text-3xl sm:text-4xl tracking-[0.1em]",
-    lg: "text-4xl sm:text-5xl tracking-[0.12em]",
+  // Dimensions based on logo image's 945:582 aspect ratio (1.62:1)
+  const dimensions = {
+    sm: { width: 72, height: 44 },
+    md: { width: 104, height: 64 },
+    lg: { width: 140, height: 86 },
   };
 
   const taglineSizeClasses = {
-    sm: "text-[7px] tracking-[0.28em]",
-    md: "text-[8px] sm:text-[9px] tracking-[0.32em]",
-    lg: "text-[10px] sm:text-[11px] tracking-[0.36em]",
+    sm: "text-[7px] tracking-[0.26em]",
+    md: "text-[8px] sm:text-[8.5px] tracking-[0.3em]",
+    lg: "text-[9.5px] sm:text-[10px] tracking-[0.34em]",
   };
+
+  const { width, height } = dimensions[size];
 
   return (
     <Link
       href="/"
-      className={`inline-flex flex-col items-center justify-center text-center group select-none transition-opacity duration-300 hover:opacity-90 ${className}`}
+      className={`inline-flex flex-col items-center justify-center text-center group select-none transition-opacity duration-300 hover:opacity-95 ${className}`}
       aria-label="AOUJ Homepage - Rise In Your Own Way"
     >
-      {/* Brand Wordmark */}
-      <span
-        className={`font-serif font-normal ${textColor} ${sizeClasses[size]} leading-none transition-transform duration-300 group-hover:scale-[1.01]`}
-        style={{ fontFamily: "var(--font-cormorant), Georgia, serif" }}
+      {/* Brand Visual Logo */}
+      <div
+        className={`relative transition-transform duration-300 group-hover:scale-[1.02] ${
+          isLight ? "brightness-110 drop-shadow-[0_1px_2px_rgba(0,0,0,0.4)]" : ""
+        }`}
+        style={{ width: `${width}px`, height: `${height}px` }}
       >
-        <span className="italic font-light">A</span>OUJ
-      </span>
+        <Image
+          src="/images/aouj-logo.png"
+          alt="Aouj - Rise In Your Own Way"
+          width={width}
+          height={height}
+          priority
+          className="object-contain w-full h-full"
+        />
+      </div>
 
       {/* Tagline with hairline divider lines */}
       {showTagline && (
-        <div className="flex items-center gap-2 mt-1 sm:mt-1.5 w-full justify-center">
-          <span className={`h-[0.5px] w-4 sm:w-6 ${lineColor}`} />
+        <div className="flex items-center gap-2 mt-0.5 sm:mt-1 w-full justify-center">
+          <span className={`h-[0.5px] w-3 sm:w-5 ${lineColor}`} />
           <span
             className={`uppercase font-sans font-medium ${taglineColor} ${taglineSizeClasses[size]} whitespace-nowrap`}
           >
             RISE IN YOUR OWN WAY
           </span>
-          <span className={`h-[0.5px] w-4 sm:w-6 ${lineColor}`} />
+          <span className={`h-[0.5px] w-3 sm:w-5 ${lineColor}`} />
         </div>
       )}
     </Link>
