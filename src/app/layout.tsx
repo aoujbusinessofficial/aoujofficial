@@ -46,8 +46,15 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en" className={`${cormorant.variable} ${manrope.variable} antialiased`}>
-      <body className="min-h-screen bg-[#FAF7F2] text-[#211A12] flex flex-col selection:bg-[#907553] selection:text-white">
+    <html
+      lang="en"
+      suppressHydrationWarning
+      className={`${cormorant.variable} ${manrope.variable} antialiased`}
+    >
+      <body
+        suppressHydrationWarning
+        className="min-h-screen bg-[#FAF7F2] text-[#211A12] flex flex-col selection:bg-[#907553] selection:text-white"
+      >
         {children}
       </body>
     </html>

@@ -14,19 +14,19 @@ interface ProductCardProps {
   className?: string;
 }
 
+// Deterministic price formatter to prevent SSR/locale hydration mismatch
+const formatPrice = (amount: number) =>
+  `Rs. ${amount.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ",")}`;
+
 export const ProductCard: React.FC<ProductCardProps> = ({ product, className = "" }) => {
   const [isHovered, setIsHovered] = useState(false);
   const [selectedColor, setSelectedColor] = useState(product.colors[0]?.name || "");
 
   const hasSecondImage = product.images.length > 1;
 
-  // Format price in Pakistani Rupees
-  const formattedPrice = `Rs. ${product.price.toLocaleString("en-PK")}`;
-  const formattedOriginalPrice = product.originalPrice
-    ? `Rs. ${product.originalPrice.toLocaleString("en-PK")}`
-    : null;
+  const formattedPrice = formatPrice(product.price);
+  const formattedOriginalPrice = product.originalPrice ? formatPrice(product.originalPrice) : null;
 
-  // Size indicator summary
   const sizeSummary =
     product.sizeType === "age"
       ? "Sizes: Ages 1 to 10 Yrs & Custom"
@@ -41,58 +41,62 @@ export const ProductCard: React.FC<ProductCardProps> = ({ product, className = "
       onMouseLeave={() => setIsHovered(false)}
     >
       {/* Image Container with 4:5 aspect ratio */}
-      <Link
-        href={`/products/${product.id}`}
-        className="relative aspect-[4/5] w-full overflow-hidden bg-[#F2EAE0] mb-3 block cursor-pointer"
-      >
-        {/* Primary Image */}
-        <Image
-          src={product.images[0]}
-          alt={product.name}
-          fill
-          sizes="(max-width: 640px) 50vw, (max-width: 1024px) 33vw, 20vw"
-          className={`object-cover object-top transition-all duration-700 ease-out ${
-            hasSecondImage && isHovered ? "opacity-0 scale-105" : "opacity-100 scale-100 group-hover:scale-103"
-          }`}
-        />
-
-        {/* Secondary Image on Hover */}
-        {hasSecondImage && (
+      <div className="relative aspect-[4/5] w-full overflow-hidden bg-[#F2EAE0] mb-3 block">
+        {/* Clickable Image Link */}
+        <Link
+          href={`/products/${product.id}`}
+          className="absolute inset-0 z-0 cursor-pointer"
+          aria-label={`View details for ${product.name}`}
+        >
+          {/* Primary Image */}
           <Image
-            src={product.images[1]}
-            alt={`${product.name} alternate view`}
+            src={product.images[0]}
+            alt={product.name}
             fill
             sizes="(max-width: 640px) 50vw, (max-width: 1024px) 33vw, 20vw"
             className={`object-cover object-top transition-all duration-700 ease-out ${
-              isHovered ? "opacity-100 scale-100" : "opacity-0 scale-98 pointer-events-none"
+              hasSecondImage && isHovered ? "opacity-0 scale-105" : "opacity-100 scale-100 group-hover:scale-103"
             }`}
           />
-        )}
 
-        {/* Badge in Top Left */}
+          {/* Secondary Image on Hover */}
+          {hasSecondImage && (
+            <Image
+              src={product.images[1]}
+              alt={`${product.name} alternate view`}
+              fill
+              sizes="(max-width: 640px) 50vw, (max-width: 1024px) 33vw, 20vw"
+              className={`object-cover object-top transition-all duration-700 ease-out ${
+                isHovered ? "opacity-100 scale-100" : "opacity-0 scale-98 pointer-events-none"
+              }`}
+            />
+          )}
+
+          {/* Quick Shop Overlay on hover for desktop */}
+          <div
+            className={`hidden sm:flex absolute inset-x-2 bottom-2 z-10 transition-all duration-300 ${
+              isHovered ? "opacity-100 translate-y-0" : "opacity-0 translate-y-2 pointer-events-none"
+            }`}
+          >
+            <div className="w-full py-2.5 bg-[#FAF7F2]/95 hover:bg-[#151007] hover:text-[#FAF7F2] text-[#151007] text-[10px] tracking-[0.2em] uppercase font-sans font-medium backdrop-blur-sm transition-colors duration-200 border border-[#D8C9B6] text-center flex items-center justify-center gap-1.5 shadow-sm">
+              <span>SELECT SIZE &amp; SHOP</span>
+              <ArrowRight size={12} />
+            </div>
+          </div>
+        </Link>
+
+        {/* Badge in Top Left (Outside Link) */}
         {product.badge && (
-          <div className="absolute top-2.5 left-2.5 z-10">
+          <div className="absolute top-2.5 left-2.5 z-10 pointer-events-none">
             <ProductBadge type={product.badge} />
           </div>
         )}
 
-        {/* Wishlist Button in Top Right */}
+        {/* Wishlist Button in Top Right (Outside Link to avoid nested button in anchor) */}
         <div className="absolute top-2.5 right-2.5 z-10 transition-opacity duration-300 sm:opacity-90 sm:group-hover:opacity-100">
           <WishlistButton initialState={product.isWishlisted} />
         </div>
-
-        {/* Quick Shop Overlay on hover for desktop */}
-        <div
-          className={`hidden sm:flex absolute inset-x-2 bottom-2 z-10 transition-all duration-300 ${
-            isHovered ? "opacity-100 translate-y-0" : "opacity-0 translate-y-2 pointer-events-none"
-          }`}
-        >
-          <div className="w-full py-2.5 bg-[#FAF7F2]/95 hover:bg-[#151007] hover:text-[#FAF7F2] text-[#151007] text-[10px] tracking-[0.2em] uppercase font-sans font-medium backdrop-blur-sm transition-colors duration-200 border border-[#D8C9B6] text-center flex items-center justify-center gap-1.5 shadow-sm">
-            <span>SELECT SIZE & SHOP</span>
-            <ArrowRight size={12} />
-          </div>
-        </div>
-      </Link>
+      </div>
 
       {/* Product Details */}
       <div className="flex flex-col gap-1">
@@ -123,7 +127,7 @@ export const ProductCard: React.FC<ProductCardProps> = ({ product, className = "
           )}
         </div>
 
-        {/* Size Guide subtle indicator */}
+        {/* Size Guide summary */}
         <p className="text-[10px] font-sans text-[#3A2E21]/70 tracking-wide truncate">
           {sizeSummary}
         </p>

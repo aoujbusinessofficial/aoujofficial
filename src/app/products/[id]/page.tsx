@@ -151,11 +151,11 @@ export default function ProductDetailPage({ params }: ProductPageProps) {
               {/* Price */}
               <div className="flex items-center gap-3 mt-3">
                 <span className="text-xl sm:text-2xl font-sans font-medium text-[#151007]">
-                  Rs. {product.price.toLocaleString("en-PK")}
+                  Rs. {product.price.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ",")}
                 </span>
                 {product.originalPrice && (
                   <span className="text-sm font-sans text-[#3A2E21]/60 line-through">
-                    Rs. {product.originalPrice.toLocaleString("en-PK")}
+                    Rs. {product.originalPrice.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ",")}
                   </span>
                 )}
                 <span className="text-[11px] font-sans px-2 py-0.5 bg-[#F2EAE0] text-[#907553] font-medium border border-[#D8C9B6]">
