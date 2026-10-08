@@ -28,11 +28,11 @@ export const ProductCard: React.FC<ProductCardProps> = ({ product, className = "
   const formattedOriginalPrice = product.originalPrice ? formatPrice(product.originalPrice) : null;
 
   const sizeSummary =
-    product.sizeType === "age"
-      ? "Sizes: Ages 1 to 10 Yrs & Custom"
-      : product.sizeType === "family"
-      ? "Matching Sets & Custom Fit"
-      : "Sizes: XS - XL & Custom Fit";
+    product.category === "girls"
+      ? "Sizes: New Born to Extra Large & Custom"
+      : product.category === "family"
+      ? "Dual Sizing: Woman (S - XL) + Girl (New Born - XL)"
+      : "Sizes: Small (S) to Extra Large (XL) & Custom";
 
   return (
     <div

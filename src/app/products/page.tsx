@@ -7,8 +7,13 @@ import { Header } from "@/components/layout/Header";
 import { AnnouncementBar } from "@/components/layout/AnnouncementBar";
 import { Footer } from "@/components/layout/Footer";
 import { ProductCard } from "@/components/product/ProductCard";
-import { allProducts, ProductCategory, Product } from "@/data/products";
-import { Filter, SlidersHorizontal, ChevronRight, Sparkles } from "lucide-react";
+import {
+  allProducts,
+  ProductCategory,
+  standardWomenSizes,
+  standardGirlsSizes,
+} from "@/data/products";
+import { ChevronRight, Sparkles, Users } from "lucide-react";
 
 function ProductsContent() {
   const searchParams = useSearchParams();
@@ -17,29 +22,61 @@ function ProductsContent() {
   const [activeCategory, setActiveCategory] = useState<string>(
     initialCategoryParam || "all"
   );
-  const [selectedSizeType, setSelectedSizeType] = useState<string>("all");
-  const [selectedAgeSize, setSelectedAgeSize] = useState<string>("all");
+  const [selectedSizeFilter, setSelectedSizeFilter] = useState<string>("all");
   const [sortBy, setSortBy] = useState<string>("featured");
 
   const categories = [
     { id: "all", label: "ALL PRODUCTS" },
-    { id: "women", label: "WOMEN" },
-    { id: "girls", label: "GIRLS (AGES 1-10)" },
-    { id: "family", label: "FAMILY MATCHING" },
+    { id: "women", label: "WOMEN (S - XL)" },
+    { id: "girls", label: "GIRLS (NEW BORN - XL)" },
+    { id: "family", label: "FAMILY (DUAL SIZING)" },
   ];
 
-  const ageSizes = [
-    "all",
-    "1 Year",
-    "2 Years",
-    "2-3 Years",
-    "3-4 Years",
-    "4-5 Years",
-    "5-6 Years",
-    "7-8 Years",
-    "9-10 Years",
-    "Customized Size",
-  ];
+  // Dynamic size filters based on selected category
+  const availableFilters = useMemo(() => {
+    if (activeCategory === "women") {
+      return ["all", ...standardWomenSizes];
+    } else if (activeCategory === "girls") {
+      return [
+        "all",
+        "New Born (0-3 Months)",
+        "3-6 Months",
+        "6-12 Months",
+        "1 Year",
+        "2-3 Years",
+        "3-4 Years",
+        "4-5 Years",
+        "5-6 Years",
+        "7-8 Years",
+        "9-10 Years",
+        "11-12 Years",
+        "Extra Large (Teen XL)",
+        "Customized Size",
+      ];
+    } else if (activeCategory === "family") {
+      return [
+        "all",
+        "Mother (Small)",
+        "Mother (Medium)",
+        "Mother (Large)",
+        "Mother (Extra Large)",
+        "Customized Family Sizing",
+      ];
+    }
+    // "all" category
+    return [
+      "all",
+      "New Born (0-3 Months)",
+      "1 Year",
+      "2-3 Years",
+      "3-4 Years",
+      "Small (S)",
+      "Medium (M)",
+      "Large (L)",
+      "Extra Large (XL)",
+      "Customized Size",
+    ];
+  }, [activeCategory]);
 
   const filteredProducts = useMemo(() => {
     let list = [...allProducts];
@@ -49,9 +86,17 @@ function ProductsContent() {
       list = list.filter((p) => p.category === activeCategory);
     }
 
-    // Filter by specific age size if selected
-    if (selectedAgeSize !== "all") {
-      list = list.filter((p) => p.sizes.includes(selectedAgeSize));
+    // Filter by size
+    if (selectedSizeFilter !== "all") {
+      list = list.filter((p) => {
+        return (
+          p.sizes.some((s) => s.toLowerCase().includes(selectedSizeFilter.toLowerCase())) ||
+          (p.womenSizes &&
+            p.womenSizes.some((s) => s.toLowerCase().includes(selectedSizeFilter.toLowerCase()))) ||
+          (p.girlsSizes &&
+            p.girlsSizes.some((s) => s.toLowerCase().includes(selectedSizeFilter.toLowerCase())))
+        );
+      });
     }
 
     // Sort
@@ -62,7 +107,7 @@ function ProductsContent() {
     }
 
     return list;
-  }, [activeCategory, selectedAgeSize, sortBy]);
+  }, [activeCategory, selectedSizeFilter, sortBy]);
 
   return (
     <div className="min-h-screen flex flex-col bg-[#FAF7F2] text-[#211A12]">
@@ -101,16 +146,21 @@ function ProductsContent() {
               style={{ fontFamily: "var(--font-cormorant), Georgia, serif" }}
             >
               {activeCategory === "women"
-                ? "Women's Collection"
+                ? "Women's Collection (Small to Extra Large)"
                 : activeCategory === "girls"
-                ? "Girls Pret & Traditional Wear"
+                ? "Girls Pret (New Born to Extra Large)"
                 : activeCategory === "family"
-                ? "Family & Matching Edits"
+                ? "Family & Coordinated Edits"
                 : "All Collections"}
             </h1>
             <p className="text-xs sm:text-sm font-sans font-light text-[#3A2E21]/80 mt-2 max-w-xl">
-              Discover graceful ensembles designed for women, age-tailored festive
-              pieces for girls (1–10 years), and coordinated family heirlooms with bespoke custom sizing.
+              {activeCategory === "women"
+                ? "Elegant silhouettes tailored from Small (S) to Extra Large (XL) with bespoke measurements."
+                : activeCategory === "girls"
+                ? "Full age spectrum from New Born (0-3 Months) through 16 Years (Extra Large Teen) with growth margins."
+                : activeCategory === "family"
+                ? "Matching mother & daughter ensembles with independent size selection for both woman and child."
+                : "Explore our complete range for women, girls, and coordinated families with comprehensive size options."}
             </p>
           </div>
 
@@ -129,7 +179,7 @@ function ProductsContent() {
                   key={cat.id}
                   onClick={() => {
                     setActiveCategory(cat.id);
-                    setSelectedAgeSize("all");
+                    setSelectedSizeFilter("all");
                   }}
                   className={`px-4 sm:px-5 py-2 text-[11px] sm:text-xs font-sans uppercase tracking-[0.18em] transition-all duration-200 cursor-pointer ${
                     isActive
@@ -160,38 +210,43 @@ function ProductsContent() {
           </div>
         </div>
 
-        {/* Age / Size Quick Filter Bar (especially when Girls is active or for general kids shopping) */}
-        {(activeCategory === "girls" || activeCategory === "all") && (
-          <div className="bg-[#F7F1E8] p-4 sm:p-5 border border-[#D8C9B6]/60 mb-8">
-            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-3">
-              <span className="text-xs font-sans font-medium uppercase tracking-[0.16em] text-[#907553] flex items-center gap-1.5">
-                <Sparkles size={14} />
-                Filter by Age / Kid Size:
-              </span>
-              <span className="text-[11px] font-sans text-[#3A2E21]/70">
-                All sizes are crafted with growth margins &amp; soft pure linings
-              </span>
-            </div>
-            <div className="flex flex-wrap gap-2">
-              {ageSizes.map((size) => {
-                const isSelected = selectedAgeSize === size;
-                return (
-                  <button
-                    key={size}
-                    onClick={() => setSelectedAgeSize(size)}
-                    className={`px-3 py-1.5 text-xs font-sans rounded-none transition-all duration-200 cursor-pointer ${
-                      isSelected
-                        ? "bg-[#907553] text-[#FAF7F2] border border-[#907553] font-medium"
-                        : "bg-[#FAF7F2] text-[#211A12] border border-[#D8C9B6] hover:border-[#907553]"
-                    }`}
-                  >
-                    {size === "all" ? "All Ages" : size}
-                  </button>
-                );
-              })}
-            </div>
+        {/* Sizing Filter Bar */}
+        <div className="bg-[#F7F1E8] p-4 sm:p-5 border border-[#D8C9B6]/60 mb-8">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 mb-3">
+            <span className="text-xs font-sans font-medium uppercase tracking-[0.16em] text-[#907553] flex items-center gap-1.5">
+              <Sparkles size={14} />
+              {activeCategory === "girls"
+                ? "Filter by Girl's Age / Size (New Born to XL):"
+                : activeCategory === "women"
+                ? "Filter by Woman's Size (Small to XL):"
+                : activeCategory === "family"
+                ? "Filter Family Set by Mother Size:"
+                : "Quick Size Filter:"}
+            </span>
+            <span className="text-[11px] font-sans text-[#3A2E21]/70">
+              Select any size to filter available pieces
+            </span>
           </div>
-        )}
+
+          <div className="flex flex-wrap gap-2">
+            {availableFilters.map((size) => {
+              const isSelected = selectedSizeFilter === size;
+              return (
+                <button
+                  key={size}
+                  onClick={() => setSelectedSizeFilter(size)}
+                  className={`px-3 py-1.5 text-xs font-sans rounded-none transition-all duration-200 cursor-pointer ${
+                    isSelected
+                      ? "bg-[#907553] text-[#FAF7F2] border border-[#907553] font-medium"
+                      : "bg-[#FAF7F2] text-[#211A12] border border-[#D8C9B6] hover:border-[#907553]"
+                  }`}
+                >
+                  {size === "all" ? "All Sizes" : size}
+                </button>
+              );
+            })}
+          </div>
+        </div>
 
         {/* Products Grid */}
         {filteredProducts.length === 0 ? (
@@ -202,7 +257,7 @@ function ProductsContent() {
             <button
               onClick={() => {
                 setActiveCategory("all");
-                setSelectedAgeSize("all");
+                setSelectedSizeFilter("all");
               }}
               className="text-xs uppercase tracking-widest text-[#907553] underline font-sans cursor-pointer"
             >
