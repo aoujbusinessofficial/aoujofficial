@@ -45,7 +45,7 @@ export const CollectionSplit: React.FC = () => {
                 <Button
                   variant="primary"
                   size="sm"
-                  href="#women"
+                  href="/products?category=women"
                   withArrow
                 >
                   SHOP WOMEN
@@ -54,16 +54,16 @@ export const CollectionSplit: React.FC = () => {
             </div>
           </div>
 
-          {/* Card 2: KIDS COLLECTION */}
+          {/* Card 2: GIRLS & FAMILY COLLECTION */}
           <div
-            id="kids-collection"
+            id="family-collection"
             className="group relative overflow-hidden bg-[#EADFD5] min-h-[380px] sm:min-h-[440px] flex flex-col justify-end"
           >
             {/* Background Image */}
             <div className="absolute inset-0 w-full h-full">
               <Image
                 src="https://images.unsplash.com/photo-1543610892-0b1f7e6d8ac1?q=85&w=1200&auto=format&fit=crop"
-                alt="AOUJ Kids Collection - Little Styles for Big Personalities"
+                alt="AOUJ Girls & Family Collection"
                 fill
                 sizes="(max-width: 768px) 100vw, 50vw"
                 className="object-cover object-[75%_25%] transition-transform duration-700 ease-out group-hover:scale-103"
@@ -79,21 +79,21 @@ export const CollectionSplit: React.FC = () => {
                 className="text-2xl sm:text-3xl lg:text-4xl text-[#151007] font-normal uppercase leading-tight"
                 style={{ fontFamily: "var(--font-cormorant), Georgia, serif" }}
               >
-                KIDS
+                GIRLS &amp; FAMILY
                 <br />
                 COLLECTION
               </h3>
               <p className="text-xs sm:text-sm font-sans font-light text-[#3A2E21] leading-relaxed">
-                Little styles for big personalities.
+                Little styles for cherished memories &amp; matching family moments.
               </p>
               <div className="pt-2">
                 <Button
                   variant="primary"
                   size="sm"
-                  href="#kids"
+                  href="/products?category=girls"
                   withArrow
                 >
-                  SHOP KIDS
+                  SHOP GIRLS &amp; FAMILY
                 </Button>
               </div>
             </div>

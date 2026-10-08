@@ -126,11 +126,7 @@ export const MobileDrawer: React.FC<MobileDrawerProps> = ({ isOpen, onClose }) =
                       <Link
                         href={item.href}
                         onClick={onClose}
-                        className={`block text-[13px] font-sans font-medium uppercase tracking-[0.16em] py-1 transition-colors ${
-                          item.label === "Sale"
-                            ? "text-[#907553] font-semibold"
-                            : "text-[#151007] hover:text-[#907553]"
-                        }`}
+                        className="block text-[13px] font-sans font-medium uppercase tracking-[0.16em] py-1 text-[#151007] hover:text-[#907553] transition-colors"
                       >
                         {item.label}
                       </Link>

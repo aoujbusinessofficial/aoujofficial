@@ -1,9 +1,10 @@
 export interface CategoryItem {
-  id: string;
+  id: "women" | "girls" | "family";
   title: string;
   subtitle: string;
   image: string;
   href: string;
+  description?: string;
 }
 
 export const categoriesData: CategoryItem[] = [
@@ -12,27 +13,23 @@ export const categoriesData: CategoryItem[] = [
     title: "WOMEN",
     subtitle: "EXPLORE",
     image: "https://images.unsplash.com/photo-1534528741775-53994a69daeb?q=80&w=900&auto=format&fit=crop",
-    href: "#women",
+    href: "/products?category=women",
+    description: "Handcrafted lawn, raw silk, and embroidered ensembles designed with timeless grace.",
   },
   {
-    id: "kids",
-    title: "KIDS",
+    id: "girls",
+    title: "GIRLS",
     subtitle: "EXPLORE",
     image: "https://images.unsplash.com/photo-1543610892-0b1f7e6d8ac1?q=80&w=900&auto=format&fit=crop",
-    href: "#kids",
+    href: "/products?category=girls",
+    description: "Charming traditional silhouettes, cotton frocks, and festive ghararas for ages 1 to 10.",
   },
   {
-    id: "new-in",
-    title: "NEW IN",
+    id: "family",
+    title: "FAMILY",
     subtitle: "EXPLORE",
-    image: "https://images.unsplash.com/photo-1489987707025-afc232f7ea0f?q=80&w=900&auto=format&fit=crop",
-    href: "#new-arrivals",
-  },
-  {
-    id: "sale",
-    title: "SALE",
-    subtitle: "EXPLORE",
-    image: "https://images.unsplash.com/photo-1584917865442-de89df76afd3?q=80&w=900&auto=format&fit=crop",
-    href: "#sale",
+    image: "https://images.unsplash.com/photo-1511895426328-dc8714191300?q=80&w=900&auto=format&fit=crop",
+    href: "/products?category=family",
+    description: "Harmonious coordinated ensembles for mother & daughter, siblings, and festive family moments.",
   },
 ];

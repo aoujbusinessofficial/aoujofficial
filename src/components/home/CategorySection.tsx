@@ -16,12 +16,13 @@ export const CategorySection: React.FC = () => {
         <SectionHeading
           eyebrow="DISCOVER AOUJ"
           title="Shop by Category"
+          subtitle="Thoughtfully curated collections for women, girls, and coordinated families."
           actionText="EXPLORE ALL"
-          actionHref="#collections"
+          actionHref="/products"
         />
 
-        {/* 4 Cards Grid: 2 columns on mobile, 4 columns on desktop */}
-        <div className="grid grid-cols-2 lg:grid-cols-4 gap-3.5 sm:gap-6">
+        {/* 3 Categories Grid: 1 col on mobile, 3 columns on tablet & desktop */}
+        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-5 sm:gap-6 lg:gap-8">
           {categoriesData.map((cat, index) => (
             <motion.div
               key={cat.id}
@@ -32,33 +33,42 @@ export const CategorySection: React.FC = () => {
             >
               <Link
                 href={cat.href}
-                className="group relative block aspect-[3/4] w-full overflow-hidden bg-[#F2EAE0] select-none"
+                className="group relative block aspect-[3/4] sm:aspect-[4/5] w-full overflow-hidden bg-[#F2EAE0] select-none"
               >
                 {/* Background Image */}
                 <Image
                   src={cat.image}
                   alt={`AOUJ ${cat.title} collection`}
                   fill
-                  sizes="(max-width: 640px) 50vw, (max-width: 1024px) 25vw, 25vw"
+                  sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
                   className="object-cover object-center transition-transform duration-700 ease-out group-hover:scale-105"
                 />
 
                 {/* Subtle dark gradient overlay at the bottom */}
-                <div className="absolute inset-0 bg-gradient-to-t from-[#151007]/85 via-[#151007]/25 to-transparent transition-opacity duration-300 group-hover:from-[#151007]/90" />
+                <div className="absolute inset-0 bg-gradient-to-t from-[#151007]/90 via-[#151007]/30 to-transparent transition-opacity duration-300 group-hover:from-[#151007]/95" />
 
                 {/* Text Content at Bottom */}
-                <div className="absolute inset-x-0 bottom-0 p-4 sm:p-6 flex flex-col justify-end text-[#FAF7F2]">
+                <div className="absolute inset-x-0 bottom-0 p-5 sm:p-7 flex flex-col justify-end text-[#FAF7F2]">
+                  <p className="text-[10px] tracking-[0.25em] text-[#DBCEBD] uppercase font-sans font-medium mb-1">
+                    COLLECTION
+                  </p>
                   <h3
-                    className="text-lg sm:text-2xl font-normal tracking-wide text-white uppercase"
+                    className="text-2xl sm:text-3xl font-normal tracking-wide text-white uppercase"
                     style={{ fontFamily: "var(--font-cormorant), Georgia, serif" }}
                   >
                     {cat.title}
                   </h3>
 
-                  <div className="inline-flex items-center gap-1.5 text-[10px] sm:text-[11px] font-sans font-medium tracking-[0.2em] text-[#DBCEBD] mt-1 group-hover:text-white transition-colors duration-200">
+                  {cat.description && (
+                    <p className="text-xs font-sans font-light text-[#FAF7F2]/80 line-clamp-2 mt-1 mb-2">
+                      {cat.description}
+                    </p>
+                  )}
+
+                  <div className="inline-flex items-center gap-1.5 text-[11px] font-sans font-medium tracking-[0.2em] text-[#DBCEBD] group-hover:text-white transition-colors duration-200">
                     <span>{cat.subtitle}</span>
                     <ArrowRight
-                      size={12}
+                      size={13}
                       className="transition-transform duration-300 group-hover:translate-x-1"
                     />
                   </div>

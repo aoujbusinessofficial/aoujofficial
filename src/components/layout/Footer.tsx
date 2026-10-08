@@ -24,11 +24,11 @@ export const Footer: React.FC = () => {
 
   const footerLinks = {
     shop: [
-      { name: "Women", href: "#women" },
-      { name: "Kids", href: "#kids" },
-      { name: "New In", href: "#new-arrivals" },
-      { name: "Collections", href: "#collections" },
-      { name: "Sale", href: "#sale" },
+      { name: "Women", href: "/products?category=women" },
+      { name: "Girls", href: "/products?category=girls" },
+      { name: "Family", href: "/products?category=family" },
+      { name: "All Products", href: "/products" },
+      { name: "Collections", href: "/products" },
     ],
     help: [
       { name: "Track Order", href: "#" },

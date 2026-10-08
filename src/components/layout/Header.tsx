@@ -68,11 +68,7 @@ export const Header: React.FC = () => {
               >
                 <Link
                   href={item.href}
-                  className={`text-[12px] xl:text-[13px] font-sans font-medium uppercase tracking-[0.18em] transition-colors duration-200 relative pb-1 group ${
-                    item.label === "Sale"
-                      ? "text-[#907553] font-semibold"
-                      : "text-[#211A12] hover:text-[#907553]"
-                  }`}
+                  className="text-[12px] xl:text-[13px] font-sans font-medium uppercase tracking-[0.18em] text-[#211A12] hover:text-[#907553] transition-colors duration-200 relative pb-1 group"
                 >
                   {item.label}
                   <span

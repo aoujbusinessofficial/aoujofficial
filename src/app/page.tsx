@@ -24,16 +24,17 @@ export default function Home() {
         {/* 3. Hero Section */}
         <Hero />
 
-        {/* 4. Shop By Category */}
+        {/* 4. Shop By Category (Women, Girls, Family) */}
         <CategorySection />
 
         {/* 5. New Arrivals */}
         <ProductSection
           id="new-arrivals"
           title="NEW ARRIVALS"
-          subtitle="Fresh styles for a brighter you."
+          subtitle="Fresh styles for women, little girls, and matching families."
           actionText="VIEW ALL"
-          actionHref="#new-arrivals-all"
+          actionHref="/products"
+          viewAllHref="/products"
           products={newArrivalsProducts}
         />
 
@@ -46,11 +47,12 @@ export default function Home() {
           title="BEST SELLERS"
           subtitle="Loved by many, for a reason."
           actionText="VIEW ALL"
-          actionHref="#best-sellers-all"
+          actionHref="/products"
+          viewAllHref="/products"
           products={bestSellersProducts}
         />
 
-        {/* 8. Women's Collection + Kids Collection */}
+        {/* 8. Women's + Girls & Family Collection */}
         <CollectionSplit />
 
         {/* 9. Service Benefits */}

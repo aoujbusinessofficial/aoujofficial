@@ -7,6 +7,7 @@ import { Product } from "@/data/products";
 import { ProductBadge } from "./ProductBadge";
 import { ColorSwatches } from "./ColorSwatches";
 import { WishlistButton } from "./WishlistButton";
+import { ArrowRight } from "lucide-react";
 
 interface ProductCardProps {
   product: Product;
@@ -25,6 +26,14 @@ export const ProductCard: React.FC<ProductCardProps> = ({ product, className = "
     ? `Rs. ${product.originalPrice.toLocaleString("en-PK")}`
     : null;
 
+  // Size indicator summary
+  const sizeSummary =
+    product.sizeType === "age"
+      ? "Sizes: Ages 1 to 10 Yrs & Custom"
+      : product.sizeType === "family"
+      ? "Matching Sets & Custom Fit"
+      : "Sizes: XS - XL & Custom Fit";
+
   return (
     <div
       className={`group flex flex-col w-full text-left transition-all duration-300 ${className}`}
@@ -32,7 +41,10 @@ export const ProductCard: React.FC<ProductCardProps> = ({ product, className = "
       onMouseLeave={() => setIsHovered(false)}
     >
       {/* Image Container with 4:5 aspect ratio */}
-      <div className="relative aspect-[4/5] w-full overflow-hidden bg-[#F2EAE0] mb-3">
+      <Link
+        href={`/products/${product.id}`}
+        className="relative aspect-[4/5] w-full overflow-hidden bg-[#F2EAE0] mb-3 block cursor-pointer"
+      >
         {/* Primary Image */}
         <Image
           src={product.images[0]}
@@ -69,24 +81,31 @@ export const ProductCard: React.FC<ProductCardProps> = ({ product, className = "
           <WishlistButton initialState={product.isWishlisted} />
         </div>
 
-        {/* Quick Add Overlay on hover for desktop */}
+        {/* Quick Shop Overlay on hover for desktop */}
         <div
           className={`hidden sm:flex absolute inset-x-2 bottom-2 z-10 transition-all duration-300 ${
             isHovered ? "opacity-100 translate-y-0" : "opacity-0 translate-y-2 pointer-events-none"
           }`}
         >
-          <button
-            type="button"
-            className="w-full py-2 bg-[#FAF7F2]/95 hover:bg-[#151007] hover:text-[#FAF7F2] text-[#151007] text-[10px] tracking-[0.18em] uppercase font-sans font-medium backdrop-blur-sm transition-colors duration-200 border border-[#D8C9B6] cursor-pointer"
-          >
-            QUICK ADD
-          </button>
+          <div className="w-full py-2.5 bg-[#FAF7F2]/95 hover:bg-[#151007] hover:text-[#FAF7F2] text-[#151007] text-[10px] tracking-[0.2em] uppercase font-sans font-medium backdrop-blur-sm transition-colors duration-200 border border-[#D8C9B6] text-center flex items-center justify-center gap-1.5 shadow-sm">
+            <span>SELECT SIZE & SHOP</span>
+            <ArrowRight size={12} />
+          </div>
         </div>
-      </div>
+      </Link>
 
       {/* Product Details */}
       <div className="flex flex-col gap-1">
-        <Link href={`#product-${product.id}`} className="group-hover:text-[#907553] transition-colors">
+        <div className="flex items-center justify-between">
+          <span className="text-[10px] uppercase font-sans tracking-[0.16em] text-[#907553] font-medium">
+            {product.category}
+          </span>
+          <span className="text-[10px] font-sans text-[#3A2E21]/60">
+            {product.sizes[0]} {product.sizes.length > 1 ? `+${product.sizes.length - 1} sizes` : ""}
+          </span>
+        </div>
+
+        <Link href={`/products/${product.id}`} className="group-hover:text-[#907553] transition-colors">
           <h3 className="text-xs sm:text-[13px] font-sans font-normal text-[#211A12] leading-snug line-clamp-1">
             {product.name}
           </h3>
@@ -103,6 +122,11 @@ export const ProductCard: React.FC<ProductCardProps> = ({ product, className = "
             </span>
           )}
         </div>
+
+        {/* Size Guide subtle indicator */}
+        <p className="text-[10px] font-sans text-[#3A2E21]/70 tracking-wide truncate">
+          {sizeSummary}
+        </p>
 
         {/* Color Swatches */}
         <div className="mt-1">

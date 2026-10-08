@@ -4,6 +4,7 @@ import React, { useRef } from "react";
 import { Product } from "@/data/products";
 import { ProductCard } from "@/components/product/ProductCard";
 import { SectionHeading } from "@/components/ui/SectionHeading";
+import { Button } from "@/components/ui/Button";
 
 interface ProductSectionProps {
   id?: string;
@@ -13,6 +14,7 @@ interface ProductSectionProps {
   actionText?: string;
   actionHref?: string;
   products: Product[];
+  viewAllHref?: string;
   className?: string;
 }
 
@@ -22,7 +24,8 @@ export const ProductSection: React.FC<ProductSectionProps> = ({
   title,
   subtitle,
   actionText = "VIEW ALL",
-  actionHref = "#",
+  actionHref = "/products",
+  viewAllHref = "/products",
   products,
   className = "",
 }) => {
@@ -62,12 +65,9 @@ export const ProductSection: React.FC<ProductSectionProps> = ({
         />
 
         {/* Product Carousel / Grid Container */}
-        {/* On desktop: 5-column grid or smooth scrollable row. Let's make it responsive:
-            mobile: 2 columns grid or horizontal scroll
-            desktop: 5 items row perfectly proportioned like reference */}
         <div
           ref={scrollContainerRef}
-          className="flex overflow-x-auto pb-4 gap-3.5 sm:gap-5 scrollbar-none scroll-smooth snap-x snap-mandatory lg:grid lg:grid-cols-5 lg:overflow-visible"
+          className="flex overflow-x-auto pb-6 gap-3.5 sm:gap-5 scrollbar-none scroll-smooth snap-x snap-mandatory lg:grid lg:grid-cols-5 lg:overflow-visible"
           style={{ scrollbarWidth: "none", msOverflowStyle: "none" }}
         >
           {products.map((product) => (
@@ -78,6 +78,19 @@ export const ProductSection: React.FC<ProductSectionProps> = ({
               <ProductCard product={product} />
             </div>
           ))}
+        </div>
+
+        {/* Prominent "VIEW ALL" button under products */}
+        <div className="mt-8 sm:mt-10 flex items-center justify-center">
+          <Button
+            variant="secondary"
+            size="md"
+            href={viewAllHref}
+            withArrow
+            className="px-8 sm:px-12 py-3.5 border-[#3A2E21]/30 hover:border-[#151007] hover:bg-[#151007] hover:text-[#FAF7F2] transition-all shadow-sm"
+          >
+            VIEW ALL PRODUCTS
+          </Button>
         </div>
       </div>
     </section>
