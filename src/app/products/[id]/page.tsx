@@ -3,7 +3,8 @@
 import React, { useState, use } from "react";
 import Image from "next/image";
 import Link from "next/link";
-import { notFound } from "next/navigation";
+import { notFound, useRouter } from "next/navigation";
+import { useCart } from "@/context/CartContext";
 import { Header } from "@/components/layout/Header";
 import { AnnouncementBar } from "@/components/layout/AnnouncementBar";
 import { Footer } from "@/components/layout/Footer";
@@ -57,6 +58,9 @@ export default function ProductDetailPage({ params }: ProductPageProps) {
   const [sizeModalTab, setSizeModalTab] = useState<"girls" | "women">("girls");
   const [addedToBag, setAddedToBag] = useState(false);
 
+  const router = useRouter();
+  const { addToCart } = useCart();
+
   // Custom size form state
   const isCustomSelected =
     product.category === "family"
@@ -69,15 +73,6 @@ export default function ProductDetailPage({ params }: ProductPageProps) {
   const [customLength, setCustomLength] = useState("");
   const [customWaist, setCustomWaist] = useState("");
   const [customNotes, setCustomNotes] = useState("");
-
-  const handleAddToBag = () => {
-    setAddedToBag(true);
-    setTimeout(() => setAddedToBag(false), 5000);
-  };
-
-  const relatedProducts = allProducts
-    .filter((p) => p.category === product.category && p.id !== product.id)
-    .slice(0, 4);
 
   // Computed summary of selected sizes
   const selectedSizeDescription =
@@ -92,6 +87,91 @@ export default function ProductDetailPage({ params }: ProductPageProps) {
     product.category === "family" && !includeGirlPiece
       ? Math.round(product.price * 0.65)
       : product.price;
+
+  const handleAddToBag = () => {
+    addToCart({
+      productId: product.id,
+      name: product.name,
+      price: currentPrice,
+      image: product.images[0],
+      color: selectedColor,
+      colorHex: product.colors.find((c) => c.name === selectedColor)?.hex,
+      category: product.category,
+      sizeDescription: selectedSizeDescription,
+      womanSize:
+        product.category === "family"
+          ? selectedWomanSize
+          : product.category === "women"
+          ? selectedSingleSize
+          : undefined,
+      girlSize:
+        product.category === "family"
+          ? includeGirlPiece
+            ? selectedGirlSize
+            : undefined
+          : product.category === "girls"
+          ? selectedSingleSize
+          : undefined,
+      includeGirlPiece: product.category === "family" ? includeGirlPiece : undefined,
+      isCustomSize: isCustomSelected,
+      customMeasurements: isCustomSelected
+        ? {
+            ageOrHeight: customAge,
+            chest: customChest,
+            shirtLength: customLength,
+            waistOrTrouser: customWaist,
+            notes: customNotes,
+          }
+        : undefined,
+      quantity: quantity,
+    });
+    setAddedToBag(true);
+    setTimeout(() => setAddedToBag(false), 5000);
+  };
+
+  const handleBuyNow = () => {
+    addToCart({
+      productId: product.id,
+      name: product.name,
+      price: currentPrice,
+      image: product.images[0],
+      color: selectedColor,
+      colorHex: product.colors.find((c) => c.name === selectedColor)?.hex,
+      category: product.category,
+      sizeDescription: selectedSizeDescription,
+      womanSize:
+        product.category === "family"
+          ? selectedWomanSize
+          : product.category === "women"
+          ? selectedSingleSize
+          : undefined,
+      girlSize:
+        product.category === "family"
+          ? includeGirlPiece
+            ? selectedGirlSize
+            : undefined
+          : product.category === "girls"
+          ? selectedSingleSize
+          : undefined,
+      includeGirlPiece: product.category === "family" ? includeGirlPiece : undefined,
+      isCustomSize: isCustomSelected,
+      customMeasurements: isCustomSelected
+        ? {
+            ageOrHeight: customAge,
+            chest: customChest,
+            shirtLength: customLength,
+            waistOrTrouser: customWaist,
+            notes: customNotes,
+          }
+        : undefined,
+      quantity: quantity,
+    });
+    router.push("/cart");
+  };
+
+  const relatedProducts = allProducts
+    .filter((p) => p.category === product.category && p.id !== product.id)
+    .slice(0, 4);
 
   return (
     <div className="min-h-screen flex flex-col bg-[#FAF7F2] text-[#211A12]">
@@ -565,7 +645,7 @@ export default function ProductDetailPage({ params }: ProductPageProps) {
 
                 <button
                   type="button"
-                  onClick={handleAddToBag}
+                  onClick={handleBuyNow}
                   className="w-full py-3.5 px-6 bg-[#907553] text-[#FAF7F2] hover:bg-[#7D6444] text-xs font-sans font-medium uppercase tracking-[0.2em] transition-all duration-200 cursor-pointer flex items-center justify-center gap-2"
                 >
                   <span>BUY NOW</span>
@@ -582,10 +662,10 @@ export default function ProductDetailPage({ params }: ProductPageProps) {
                     </span>
                   </div>
                   <Link
-                    href="#cart"
+                    href="/cart"
                     className="underline font-medium text-[#907553] hover:text-[#151007]"
                   >
-                    View Bag
+                    View Bag →
                   </Link>
                 </div>
               )}

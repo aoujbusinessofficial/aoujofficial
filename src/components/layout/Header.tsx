@@ -7,8 +7,10 @@ import { navigationData, NavItem } from "@/data/navigation";
 import { Logo } from "@/components/ui/Logo";
 import { MegaMenu } from "./MegaMenu";
 import { MobileDrawer } from "./MobileDrawer";
+import { useCart } from "@/context/CartContext";
 
 export const Header: React.FC = () => {
+  const { totalCount } = useCart();
   const [activeItem, setActiveItem] = useState<NavItem | null>(null);
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [isMobileDrawerOpen, setIsMobileDrawerOpen] = useState(false);
@@ -131,15 +133,15 @@ export const Header: React.FC = () => {
               <User size={19} strokeWidth={1.5} />
             </Link>
 
-            {/* Shopping Bag Icon with Badge */}
+            {/* Shopping Bag Icon with Live Badge */}
             <Link
-              href="#cart"
-              aria-label="Shopping bag with 0 items"
+              href="/cart"
+              aria-label={`Shopping bag with ${totalCount} items`}
               className="relative p-2 text-[#211A12] hover:text-[#907553] transition-colors"
             >
               <ShoppingBag size={19} strokeWidth={1.5} />
-              <span className="absolute top-1 right-0 w-4 h-4 rounded-full bg-[#151007] text-[#FAF7F2] text-[9px] font-sans font-medium flex items-center justify-center border border-[#FAF7F2]">
-                0
+              <span className="absolute top-1 right-0 min-w-[16px] h-4 rounded-full bg-[#151007] text-[#FAF7F2] text-[9px] font-sans font-medium flex items-center justify-center px-1 border border-[#FAF7F2]">
+                {totalCount}
               </span>
             </Link>
           </div>
