@@ -38,9 +38,9 @@ export const Footer: React.FC = () => {
       { name: "FAQs", href: "#" },
     ],
     about: [
-      { name: "Our Story", href: "#" },
-      { name: "Sustainability", href: "#" },
-      { name: "Contact Us", href: "#" },
+      { name: "Our Story", href: "/about" },
+      { name: "The Atelier & Craft", href: "/about#craft" },
+      { name: "Our Philosophy", href: "/about#philosophy" },
     ],
   };
 

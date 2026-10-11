@@ -134,6 +134,16 @@ export const MobileDrawer: React.FC<MobileDrawerProps> = ({ isOpen, onClose }) =
                   </div>
                 );
               })}
+
+              <div className="py-2.5">
+                <Link
+                  href="/about"
+                  onClick={onClose}
+                  className="block text-[13px] font-sans font-medium uppercase tracking-[0.16em] py-1 text-[#907553] hover:text-[#151007] transition-colors"
+                >
+                  Our Story
+                </Link>
+              </div>
             </div>
 
             {/* Footer Actions */}
