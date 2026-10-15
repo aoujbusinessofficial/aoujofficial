@@ -1,6 +1,7 @@
 "use client";
 
 import React, { createContext, useContext, useState, useEffect } from "react";
+import { syncProfileToSupabase, syncMeasurementsToSupabase } from "@/services/authService";
 
 export interface UserProfile {
   name: string;
@@ -64,18 +65,27 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   };
 
   const login = async (email: string, name?: string): Promise<boolean> => {
-    // Simulated realistic client-side authentication
+    // Simulated client authentication with automatic Supabase sync
     const displayName = name || email.split("@")[0].replace(/[._]/g, " ") || "Valued Client";
+    const formattedName = displayName
+      .split(" ")
+      .map((w) => w.charAt(0).toUpperCase() + w.slice(1))
+      .join(" ");
+
     const profile: UserProfile = {
-      name: displayName
-        .split(" ")
-        .map((w) => w.charAt(0).toUpperCase() + w.slice(1))
-        .join(" "),
+      name: formattedName,
       email,
       isGuest: false,
       measurements: user?.measurements,
     };
     persistUser(profile);
+
+    // Sync to Supabase in background
+    syncProfileToSupabase({
+      email,
+      fullName: formattedName,
+    }).catch((e) => console.warn(e));
+
     return true;
   };
 
@@ -87,6 +97,14 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       isGuest: false,
     };
     persistUser(profile);
+
+    // Sync to Supabase in background
+    syncProfileToSupabase({
+      email: email.trim(),
+      fullName: name.trim(),
+      phone: phone?.trim(),
+    }).catch((e) => console.warn(e));
+
     return true;
   };
 
@@ -107,6 +125,21 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     if (user) {
       const updated = { ...user, measurements };
       persistUser(updated);
+
+      if (user.email) {
+        syncProfileToSupabase({
+          email: user.email,
+          fullName: user.name,
+          phone: user.phone,
+        }).then((dbUser) => {
+          if (dbUser?.id) {
+            syncMeasurementsToSupabase({
+              userId: dbUser.id,
+              ...measurements,
+            });
+          }
+        });
+      }
     }
   };
 

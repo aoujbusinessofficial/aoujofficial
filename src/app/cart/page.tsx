@@ -5,6 +5,7 @@ import Link from "next/link";
 import Image from "next/image";
 import { useCart, CartItem } from "@/context/CartContext";
 import { useAuth } from "@/context/AuthContext";
+import { placeOrder } from "@/services/orderService";
 import { Header } from "@/components/layout/Header";
 import { AnnouncementBar } from "@/components/layout/AnnouncementBar";
 import { Footer } from "@/components/layout/Footer";
@@ -49,6 +50,8 @@ export default function CartPage() {
   // Checkout modal state
   const [showCheckoutModal, setShowCheckoutModal] = useState(false);
   const [orderPlaced, setOrderPlaced] = useState(false);
+  const [confirmedOrderNumber, setConfirmedOrderNumber] = useState("");
+  const [isPlacingOrder, setIsPlacingOrder] = useState(false);
   const [customerName, setCustomerName] = useState("");
   const [customerPhone, setCustomerPhone] = useState("");
   const [customerCity, setCustomerCity] = useState("Lahore");
@@ -83,11 +86,35 @@ export default function CartPage() {
   const progressPercent = Math.min(100, (subtotal / freeShippingThreshold) * 100);
   const amountToFreeShipping = Math.max(0, freeShippingThreshold - subtotal);
 
-  const handlePlaceOrder = (e: React.FormEvent) => {
+  const handlePlaceOrder = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (customerName && customerPhone && customerAddress) {
+    if (!customerName || !customerPhone || !customerAddress) return;
+
+    setIsPlacingOrder(true);
+    try {
+      const res = await placeOrder({
+        customerName,
+        customerEmail: user?.email,
+        customerPhone,
+        customerCity,
+        customerAddress,
+        paymentMethod,
+        subtotal,
+        shippingFee,
+        discountAmount: promoDiscount,
+        grandTotal: finalPayable,
+        isGuest: !isAuthenticated,
+        userId: null,
+        items,
+      });
+
+      setConfirmedOrderNumber(res.orderNumber);
       setOrderPlaced(true);
       clearCart();
+    } catch (err) {
+      console.error("Order submission error:", err);
+    } finally {
+      setIsPlacingOrder(false);
     }
   };
 
@@ -508,6 +535,11 @@ export default function CartPage() {
                 <p className="text-xs sm:text-sm font-sans text-[#3A2E21]/80 max-w-md mx-auto leading-relaxed">
                   Thank you, <strong>{customerName}</strong>! Your order for AOUJ heirloom pieces has been received. Our concierge team will call you on <strong>{customerPhone}</strong> to confirm dispatch and custom measurements.
                 </p>
+                {confirmedOrderNumber && (
+                  <div className="p-2.5 bg-[#FAF7F2] border border-[#907553] text-xs font-sans text-[#151007] max-w-sm mx-auto">
+                    Order Reference: <strong className="font-mono text-[#907553]">{confirmedOrderNumber}</strong>
+                  </div>
+                )}
                 <div className="p-3 bg-[#F2EAE0] border border-[#D8C9B6] text-xs font-sans text-[#151007] max-w-sm mx-auto">
                   Payment Method: <strong>{paymentMethod}</strong>
                   <br />
@@ -653,9 +685,10 @@ export default function CartPage() {
                 <div className="pt-2">
                   <button
                     type="submit"
-                    className="w-full py-3.5 bg-[#151007] text-[#FAF7F2] hover:bg-[#3A2E21] text-xs font-sans uppercase tracking-widest font-medium transition-all cursor-pointer"
+                    disabled={isPlacingOrder}
+                    className="w-full py-3.5 bg-[#151007] text-[#FAF7F2] hover:bg-[#3A2E21] text-xs font-sans uppercase tracking-widest font-medium transition-all cursor-pointer disabled:opacity-50"
                   >
-                    CONFIRM &amp; PLACE ORDER
+                    {isPlacingOrder ? "SAVING ORDER TO DATABASE..." : "CONFIRM & PLACE ORDER"}
                   </button>
                 </div>
               </form>
