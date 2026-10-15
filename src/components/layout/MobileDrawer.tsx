@@ -158,7 +158,7 @@ export const MobileDrawer: React.FC<MobileDrawerProps> = ({ isOpen, onClose }) =
                   <span>Wishlist</span>
                 </Link>
                 <Link
-                  href="#account"
+                  href="/account"
                   onClick={onClose}
                   className="flex items-center gap-2 py-2 px-3 bg-[#FAF7F2] border border-[#D8C9B6] text-[#211A12] justify-center"
                 >

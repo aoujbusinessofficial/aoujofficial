@@ -8,9 +8,11 @@ import { Logo } from "@/components/ui/Logo";
 import { MegaMenu } from "./MegaMenu";
 import { MobileDrawer } from "./MobileDrawer";
 import { useCart } from "@/context/CartContext";
+import { useAuth } from "@/context/AuthContext";
 
 export const Header: React.FC = () => {
   const { totalCount } = useCart();
+  const { user, isAuthenticated } = useAuth();
   const [activeItem, setActiveItem] = useState<NavItem | null>(null);
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [isMobileDrawerOpen, setIsMobileDrawerOpen] = useState(false);
@@ -126,11 +128,14 @@ export const Header: React.FC = () => {
 
             {/* Account Icon */}
             <Link
-              href="#account"
-              aria-label="Customer account"
-              className="hidden sm:inline-block p-2 text-[#211A12] hover:text-[#907553] transition-colors"
+              href="/account"
+              aria-label={isAuthenticated ? `Account for ${user?.name}` : "Customer account (Login/Signup/Guest)"}
+              className="hidden sm:inline-flex items-center p-2 text-[#211A12] hover:text-[#907553] transition-colors relative"
             >
               <User size={19} strokeWidth={1.5} />
+              {isAuthenticated && (
+                <span className="w-1.5 h-1.5 rounded-full bg-[#907553] absolute top-2 right-1.5" />
+              )}
             </Link>
 
             {/* Shopping Bag Icon with Live Badge */}

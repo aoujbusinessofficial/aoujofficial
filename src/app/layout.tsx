@@ -41,6 +41,7 @@ export const metadata: Metadata = {
 };
 
 import { CartProvider } from "@/context/CartContext";
+import { AuthProvider } from "@/context/AuthContext";
 
 export default function RootLayout({
   children,
@@ -93,7 +94,9 @@ export default function RootLayout({
         suppressHydrationWarning
         className="min-h-screen bg-[#FAF7F2] text-[#211A12] flex flex-col selection:bg-[#907553] selection:text-white"
       >
-        <CartProvider>{children}</CartProvider>
+        <AuthProvider>
+          <CartProvider>{children}</CartProvider>
+        </AuthProvider>
       </body>
     </html>
   );

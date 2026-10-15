@@ -1,9 +1,10 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import Link from "next/link";
 import Image from "next/image";
 import { useCart, CartItem } from "@/context/CartContext";
+import { useAuth } from "@/context/AuthContext";
 import { Header } from "@/components/layout/Header";
 import { AnnouncementBar } from "@/components/layout/AnnouncementBar";
 import { Footer } from "@/components/layout/Footer";
@@ -38,6 +39,7 @@ export default function CartPage() {
     shippingFee,
     grandTotal,
   } = useCart();
+  const { user, isAuthenticated } = useAuth();
 
   const [promoCode, setPromoCode] = useState("");
   const [promoDiscount, setPromoDiscount] = useState(0);
@@ -52,6 +54,13 @@ export default function CartPage() {
   const [customerCity, setCustomerCity] = useState("Lahore");
   const [customerAddress, setCustomerAddress] = useState("");
   const [paymentMethod, setPaymentMethod] = useState("Cash on Delivery (COD)");
+
+  useEffect(() => {
+    if (user) {
+      if (user.name && !customerName) setCustomerName(user.name);
+      if (user.phone && !customerPhone) setCustomerPhone(user.phone);
+    }
+  }, [user]);
 
   // Handle promo code
   const handleApplyPromo = (e: React.FormEvent) => {
@@ -531,6 +540,11 @@ export default function CartPage() {
                     >
                       Delivery &amp; Customer Details
                     </h3>
+                    <p className="text-[10px] text-[#3A2E21]/70 font-sans mt-0.5">
+                      {isAuthenticated
+                        ? `Logged in as ${user?.name}`
+                        : "Guest Checkout • No registration needed"}
+                    </p>
                   </div>
                   <button
                     type="button"
