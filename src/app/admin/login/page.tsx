@@ -97,17 +97,19 @@ export default function AdminLoginPage() {
           </div>
 
           <div className="space-y-1.5">
-            <label className="block text-[10px] font-sans font-medium uppercase tracking-[0.2em] text-[#AF997E]">
-              Master Password
-            </label>
+            <div className="flex items-center justify-between">
+              <label className="block text-[10px] font-sans font-medium uppercase tracking-[0.2em] text-[#AF997E]">
+                Password / Passcode
+              </label>
+              <span className="text-[10px] text-[#907553] font-sans">(Any / admin123)</span>
+            </div>
             <div className="relative flex items-center">
               <Lock size={15} className="absolute left-3 text-[#AF997E]/60" />
               <input
                 type="password"
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
-                placeholder="••••••••••••"
-                required
+                placeholder="Enter password (e.g. admin123)"
                 className="w-full bg-[#151007] border border-[#3A2E21] py-2.5 pl-9 pr-3 text-xs font-sans text-[#FAF7F2] placeholder:text-[#AF997E]/40 focus:outline-none focus:border-[#907553] transition-colors"
               />
             </div>
