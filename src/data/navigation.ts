@@ -161,4 +161,8 @@ export const navigationData: NavItem[] = [
       },
     },
   },
+  {
+    label: "Contact",
+    href: "/contact",
+  },
 ];

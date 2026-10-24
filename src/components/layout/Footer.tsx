@@ -32,11 +32,11 @@ export const Footer: React.FC = () => {
       { name: "Collections", href: "/products" },
     ],
     help: [
+      { name: "Contact & Assistance", href: "/contact" },
       { name: "Track Order", href: "/track-order" },
-      { name: "Shipping Policy", href: "#" },
-      { name: "Returns & Exchange", href: "#" },
-      { name: "Size Guide", href: "#" },
-      { name: "FAQs", href: "#" },
+      { name: "Returns & Exchange (72 Hours)", href: "/contact" },
+      { name: "Shipping & Delivery Policy", href: "/contact" },
+      { name: "FAQs", href: "/contact" },
     ],
     about: [
       { name: "Our Story", href: "/about" },
