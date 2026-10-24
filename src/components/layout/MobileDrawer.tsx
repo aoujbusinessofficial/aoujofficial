@@ -23,6 +23,21 @@ export const MobileDrawer: React.FC<MobileDrawerProps> = ({ isOpen, onClose }) =
   const [searchResults, setSearchResults] = useState<Product[]>([]);
   const [isSearching, setIsSearching] = useState(false);
 
+  // Lock body scroll when mobile drawer is open to prevent page from showing or shifting
+  useEffect(() => {
+    if (isOpen) {
+      document.body.style.overflow = "hidden";
+      document.body.style.touchAction = "none";
+    } else {
+      document.body.style.overflow = "";
+      document.body.style.touchAction = "";
+    }
+    return () => {
+      document.body.style.overflow = "";
+      document.body.style.touchAction = "";
+    };
+  }, [isOpen]);
+
   useEffect(() => {
     const q = mobileQuery.trim();
     if (!q) {
@@ -52,7 +67,7 @@ export const MobileDrawer: React.FC<MobileDrawerProps> = ({ isOpen, onClose }) =
   return (
     <AnimatePresence>
       {isOpen && (
-        <div className="fixed inset-0 z-50 lg:hidden">
+        <div className="fixed inset-0 z-[100] lg:hidden">
           {/* Backdrop */}
           <motion.div
             initial={{ opacity: 0 }}
@@ -60,7 +75,7 @@ export const MobileDrawer: React.FC<MobileDrawerProps> = ({ isOpen, onClose }) =
             exit={{ opacity: 0 }}
             transition={{ duration: 0.3 }}
             onClick={onClose}
-            className="fixed inset-0 bg-[#151007]/50 backdrop-blur-sm"
+            className="fixed inset-0 bg-[#151007]/60 backdrop-blur-sm"
           />
 
           {/* Drawer content */}
@@ -69,10 +84,10 @@ export const MobileDrawer: React.FC<MobileDrawerProps> = ({ isOpen, onClose }) =
             animate={{ x: 0 }}
             exit={{ x: "-100%" }}
             transition={{ duration: 0.35, ease: [0.16, 1, 0.3, 1] }}
-            className="fixed inset-y-0 left-0 w-[85%] max-w-[360px] bg-[#FAF7F2] text-[#211A12] shadow-2xl flex flex-col z-50 overflow-hidden"
+            className="fixed inset-y-0 left-0 w-[85%] max-w-[360px] h-[100dvh] bg-[#FAF7F2] text-[#211A12] shadow-2xl flex flex-col z-[101] overflow-hidden"
           >
             {/* Header */}
-            <div className="p-4 flex items-center justify-between border-b border-[#D8C9B6]/60">
+            <div className="p-4 flex items-center justify-between border-b border-[#D8C9B6]/60 bg-[#FAF7F2]">
               <Logo size="sm" showTagline={false} />
               <button
                 type="button"
