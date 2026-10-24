@@ -45,7 +45,44 @@ export async function POST(req: Request) {
           </p>
 
           <div style="border-top: 1px solid #D8C9B6; margin-top: 30px; padding-top: 16px; text-align: center; font-size: 11px; color: #907553; text-transform: uppercase; letter-spacing: 1px;">
-            AOUJ Atelier • Gulberg III, Lahore • +92 300 0000000
+            AOUJ Atelier • Gulberg III, Lahore • +92 342-6300002
+          </div>
+        </div>
+      `;
+    } else if (type === "CUSTOM") {
+      emailSubject = subject || `[AOUJ Client Inquiry] ${data?.subject || "Support Query"}`;
+      htmlContent = `
+        <div style="font-family: 'Georgia', serif; max-width: 600px; margin: 0 auto; background-color: #FAF7F2; border: 1px solid #D8C9B6; padding: 32px 28px; color: #151007;">
+          <div style="text-align: center; border-bottom: 1px solid #D8C9B6; padding-bottom: 18px; margin-bottom: 22px;">
+            <h1 style="margin: 0; font-size: 28px; letter-spacing: 5px; font-weight: normal; color: #151007;">AOUJ</h1>
+            <p style="margin: 4px 0 0 0; font-size: 10px; letter-spacing: 2.5px; color: #907553; text-transform: uppercase;">Client Services & Concierge Notification</p>
+          </div>
+
+          <p style="font-size: 13px; color: #907553; text-transform: uppercase; letter-spacing: 1.5px; font-weight: bold; margin-bottom: 12px;">
+            New Customer Inquiry Received
+          </p>
+
+          <div style="background: #F2EAE0; padding: 16px; border: 1px solid #D8C9B6; font-size: 13px; margin-bottom: 20px;">
+            <p style="margin: 0 0 6px;"><strong>Customer Name:</strong> ${data?.name || "N/A"}</p>
+            <p style="margin: 0 0 6px;"><strong>Email:</strong> <a href="mailto:${data?.email}" style="color: #907553;">${data?.email || "N/A"}</a></p>
+            <p style="margin: 0 0 6px;"><strong>Phone / WhatsApp:</strong> <a href="tel:${data?.phone}" style="color: #907553;">${data?.phone || "N/A"}</a></p>
+            ${data?.orderNumber ? `<p style="margin: 0 0 6px;"><strong>Order Reference:</strong> <span style="font-family: monospace; font-weight: bold;">${data?.orderNumber}</span></p>` : ""}
+            <p style="margin: 0;"><strong>Category / Subject:</strong> ${data?.subject || "General Inquiry"}</p>
+          </div>
+
+          <div style="background: #FAF7F2; padding: 18px; border-left: 3px solid #907553; border: 1px solid #D8C9B6; margin-bottom: 20px;">
+            <p style="margin: 0 0 8px; font-size: 12px; font-weight: bold; text-transform: uppercase; color: #151007; letter-spacing: 1px;">Customer Message:</p>
+            <p style="margin: 0; font-size: 13.5px; line-height: 1.7; color: #211A12; white-space: pre-wrap;">${data?.message || "No message body provided."}</p>
+          </div>
+
+          <div style="text-align: center; margin-top: 24px;">
+            <a href="mailto:${data?.email}?subject=Re: [AOUJ Atelier] ${encodeURIComponent(data?.subject || 'Your Inquiry')}" style="background-color: #151007; color: #FAF7F2; padding: 11px 22px; text-decoration: none; font-size: 11px; letter-spacing: 2px; text-transform: uppercase; display: inline-block;">
+              Reply To Client (${data?.email})
+            </a>
+          </div>
+
+          <div style="border-top: 1px solid #D8C9B6; margin-top: 26px; padding-top: 14px; text-align: center; font-size: 10.5px; color: #907553; text-transform: uppercase; letter-spacing: 1px;">
+            AOUJ Atelier Concierge • +92 342-6300002 • Gulberg III, Lahore
           </div>
         </div>
       `;
@@ -137,6 +174,8 @@ export async function POST(req: Request) {
       // Plain text fallback prevents spam filters from flagging HTML-only emails
       const plainTextFallback = type === "ORDER_CONFIRMATION"
         ? `Dear ${data?.customerName || "Valued Patron"},\n\nThank you for ordering with AOUJ Atelier. Your consignment has been registered under reference ${data?.orderNumber}.\n\nTotal Payable: PKR ${(data?.grandTotal || 0).toLocaleString()}\nPayment Method: ${data?.paymentMethod || "Cash on Delivery"}\nDelivery Address: ${data?.shippingAddress || ""}, ${data?.city || ""}\n\nAOUJ Atelier Concierge: +92 342-6300002`
+        : type === "CUSTOM"
+        ? `New Client Inquiry Received:\n\nCustomer: ${data?.name}\nEmail: ${data?.email}\nPhone: ${data?.phone}\nOrder Reference: ${data?.orderNumber || "N/A"}\nSubject: ${data?.subject}\n\nMessage:\n${data?.message}\n\nAOUJ Atelier Concierge`
         : `Your verification code is: ${data?.otp || "000000"}`;
 
       await transporter.sendMail({
