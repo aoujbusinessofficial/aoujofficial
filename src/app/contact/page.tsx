@@ -5,6 +5,7 @@ import Link from "next/link";
 import { Header } from "@/components/layout/Header";
 import { AnnouncementBar } from "@/components/layout/AnnouncementBar";
 import { Footer } from "@/components/layout/Footer";
+import { createClient, isSupabaseConfigured } from "@/lib/supabase/client";
 import {
   Mail,
   Phone,
@@ -34,22 +35,55 @@ export default function ContactPage() {
   const officialPhone = "+92 342-6300002";
   const advisorName = "Adnan";
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsSubmitting(true);
 
-    // Format professional inquiry for Email / WhatsApp
-    const queryDetails = `Assalam o Alaikum AOUJ Concierge,\n\nName: ${name.trim()}\nEmail: ${email.trim()}\nPhone: ${phone.trim()}\nSubject: ${subject}\n${orderNumber ? `Order Reference: ${orderNumber.trim()}\n` : ""}\nMessage:\n${message.trim()}`;
+    // 1. Save query directly to Supabase Database
+    if (isSupabaseConfigured) {
+      const supabase = createClient();
+      if (supabase) {
+        try {
+          await (supabase as any).from("contact_inquiries").insert({
+            name: name.trim(),
+            email: email.trim(),
+            phone: phone.trim(),
+            order_number: orderNumber.trim() || null,
+            subject,
+            message: message.trim(),
+            status: "NEW",
+          });
+        } catch (dbErr) {
+          console.warn("Could not save inquiry to Supabase:", dbErr);
+        }
+      }
+    }
 
-    // Open direct mailto client as reliable direct dispatch
-    const mailtoUrl = `mailto:${officialEmail}?subject=${encodeURIComponent(`[AOUJ Atelier Inquiry] ${subject}${orderNumber ? ` - #${orderNumber}` : ""}`)}&body=${encodeURIComponent(queryDetails)}`;
+    // 2. Also forward to official support email via background API
+    try {
+      await fetch("/api/send-email", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          to: officialEmail,
+          subject: `[AOUJ Client Inquiry] ${subject}${orderNumber ? ` - #${orderNumber}` : ""}`,
+          type: "CUSTOM",
+          data: {
+            name,
+            email,
+            phone,
+            orderNumber,
+            subject,
+            message,
+          },
+        }),
+      });
+    } catch (mailErr) {
+      // Graceful fallback
+    }
 
-    window.location.href = mailtoUrl;
-
-    setTimeout(() => {
-      setIsSubmitting(false);
-      setSubmitted(true);
-    }, 600);
+    setIsSubmitting(false);
+    setSubmitted(true);
   };
 
   return (
