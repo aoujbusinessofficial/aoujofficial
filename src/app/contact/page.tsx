@@ -224,7 +224,7 @@ export default function ContactPage() {
                 <div>
                   <p className="font-semibold text-[#151007]">Atelier Headquarters</p>
                   <p className="text-[11px] text-[#665a4a]">
-                    AOUJ Haute Couture &amp; Heirloom House, Lahore, Pakistan.
+                    AOUJ Haute Couture &amp; Heirloom House, Gujrat, Punjab, Pakistan.
                   </p>
                 </div>
               </div>

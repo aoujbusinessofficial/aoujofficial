@@ -45,7 +45,7 @@ export async function POST(req: Request) {
           </p>
 
           <div style="border-top: 1px solid #D8C9B6; margin-top: 30px; padding-top: 16px; text-align: center; font-size: 11px; color: #907553; text-transform: uppercase; letter-spacing: 1px;">
-            AOUJ Atelier • Gulberg III, Lahore • +92 342-6300002
+            AOUJ Atelier Concierge • +92 342-6300002 • Gujrat, Punjab, Pakistan
           </div>
         </div>
       `;
@@ -82,7 +82,7 @@ export async function POST(req: Request) {
           </div>
 
           <div style="border-top: 1px solid #D8C9B6; margin-top: 26px; padding-top: 14px; text-align: center; font-size: 10.5px; color: #907553; text-transform: uppercase; letter-spacing: 1px;">
-            AOUJ Atelier Concierge • +92 342-6300002 • Gulberg III, Lahore
+            AOUJ Atelier Concierge • +92 342-6300002 • Gujrat, Punjab, Pakistan
           </div>
         </div>
       `;
@@ -153,7 +153,7 @@ export async function POST(req: Request) {
           </div>
 
           <div style="border-top: 1px solid #D8C9B6; margin-top: 30px; padding-top: 16px; text-align: center; font-size: 11px; color: #907553; text-transform: uppercase; letter-spacing: 1px;">
-            AOUJ Atelier Concierge • +92 342-6300002 • Gulberg III, Lahore
+            AOUJ Atelier Concierge • +92 342-6300002 • Gujrat, Punjab, Pakistan
           </div>
         </div>
       `;

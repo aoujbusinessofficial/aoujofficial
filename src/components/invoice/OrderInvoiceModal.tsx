@@ -71,9 +71,9 @@ export const OrderInvoiceModal: React.FC<OrderInvoiceModalProps> = ({
                 HAUTE COUTURE &amp; HEIRLOOM ATELIER
               </p>
               <p className="text-xs font-sans text-[#3A2E21]/70 mt-2 leading-relaxed">
-                Gulberg III, Lahore, Pakistan
+                Gujrat, Punjab, Pakistan
                 <br />
-                Concierge: +92 300 0000000 | concierge@aouj.atelier
+                Concierge: +92 342-6300002 | aoujbusinessofficial@gmail.com
               </p>
             </div>
 

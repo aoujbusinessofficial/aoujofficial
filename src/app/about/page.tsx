@@ -186,7 +186,7 @@ export default function AboutPage() {
                 {/* Decorative floating badge */}
                 <div className="absolute -bottom-6 -left-4 sm:left-4 bg-[#FAF7F2] border border-[#D8C9B6] p-4 shadow-lg hidden sm:block">
                   <p className="text-[10px] uppercase tracking-[0.2em] font-sans font-medium text-[#907553]">
-                    ESTABLISHED IN LAHORE
+                    HANDCRAFTED IN GUJRAT, PUNJAB
                   </p>
                   <p
                     className="text-lg text-[#151007] font-normal leading-tight"
