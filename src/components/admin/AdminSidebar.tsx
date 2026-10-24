@@ -15,6 +15,7 @@ import {
   Menu,
   X,
   ShieldCheck,
+  User,
 } from "lucide-react";
 
 export const AdminSidebar: React.FC = () => {
@@ -28,6 +29,7 @@ export const AdminSidebar: React.FC = () => {
     { label: "Products", href: "/admin/products", icon: <Package size={18} /> },
     { label: "Clients", href: "/admin/users", icon: <Users size={18} /> },
     { label: "Promos & Sale", href: "/admin/promos", icon: <Tag size={18} /> },
+    { label: "My Profile", href: "/admin/profile", icon: <User size={18} /> },
   ];
 
   return (
@@ -99,19 +101,34 @@ export const AdminSidebar: React.FC = () => {
           </div>
 
           {/* Admin User Badge */}
-          <div className="px-6 py-4 bg-[#1A140A] border-b border-[#3A2E21]/50 flex items-center gap-3">
-            <div className="w-8 h-8 rounded-full bg-[#907553] text-[#FAF7F2] font-serif text-sm flex items-center justify-center font-medium">
-              {admin?.fullName?.charAt(0) || "A"}
+          <Link
+            href="/admin/profile"
+            onClick={() => setMobileOpen(false)}
+            className="px-6 py-4 bg-[#1A140A] border-b border-[#3A2E21]/50 flex items-center gap-3 hover:bg-[#221a0d] transition-colors group cursor-pointer block"
+            title="Manage Admin Profile & Security"
+          >
+            <div className="flex items-center gap-3">
+              {admin?.avatarUrl ? (
+                <img
+                  src={admin.avatarUrl}
+                  alt={admin.fullName || "Admin"}
+                  className="w-8 h-8 rounded-full object-cover border border-[#907553] shrink-0"
+                />
+              ) : (
+                <div className="w-8 h-8 rounded-full bg-[#907553] text-[#FAF7F2] font-serif text-sm flex items-center justify-center font-medium shrink-0">
+                  {admin?.fullName?.charAt(0) || "A"}
+                </div>
+              )}
+              <div className="overflow-hidden flex-1">
+                <p className="text-xs font-sans font-medium text-[#FAF7F2] truncate group-hover:text-[#907553] transition-colors">
+                  {admin?.fullName || "Administrator"}
+                </p>
+                <p className="text-[10px] font-sans text-[#907553] flex items-center gap-1">
+                  <ShieldCheck size={11} /> Master Admin
+                </p>
+              </div>
             </div>
-            <div className="overflow-hidden">
-              <p className="text-xs font-sans font-medium text-[#FAF7F2] truncate">
-                {admin?.fullName || "Administrator"}
-              </p>
-              <p className="text-[10px] font-sans text-[#907553] flex items-center gap-1">
-                <ShieldCheck size={11} /> Master Admin
-              </p>
-            </div>
-          </div>
+          </Link>
 
           {/* Navigation Items */}
           <nav className="p-4 space-y-1.5">

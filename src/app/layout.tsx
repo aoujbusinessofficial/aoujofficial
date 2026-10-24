@@ -42,6 +42,8 @@ export const metadata: Metadata = {
 
 import { CartProvider } from "@/context/CartContext";
 import { AuthProvider } from "@/context/AuthContext";
+import { WishlistProvider } from "@/context/WishlistContext";
+import { FloatingWhatsAppWidget } from "@/components/ui/FloatingWhatsAppWidget";
 
 export default function RootLayout({
   children,
@@ -95,7 +97,12 @@ export default function RootLayout({
         className="min-h-screen bg-[#FAF7F2] text-[#211A12] flex flex-col selection:bg-[#907553] selection:text-white"
       >
         <AuthProvider>
-          <CartProvider>{children}</CartProvider>
+          <WishlistProvider>
+            <CartProvider>
+              {children}
+              <FloatingWhatsAppWidget />
+            </CartProvider>
+          </WishlistProvider>
         </AuthProvider>
       </body>
     </html>

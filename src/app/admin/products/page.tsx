@@ -21,6 +21,11 @@ import {
   AlertTriangle,
   X,
   Sliders,
+  Upload,
+  ArrowLeft,
+  ArrowRight,
+  Star,
+  Image as ImageIcon,
 } from "lucide-react";
 import { Button } from "@/components/ui/Button";
 
@@ -48,14 +53,17 @@ export default function AdminProductsPage() {
   const [price, setPrice] = useState<number>(4990);
   const [compareAtPrice, setCompareAtPrice] = useState<number>(5490);
   const [stock, setStock] = useState<number>(30);
-  const [colorName, setColorName] = useState("Ivory Silk");
-  const [colorHex, setColorHex] = useState("#F7F1E8");
+  const [description, setDescription] = useState("");
   const [fabric, setFabric] = useState("Pure Combed Organic Lawn");
   const [isNewArrival, setIsNewArrival] = useState(true);
   const [isBestSeller, setIsBestSeller] = useState(false);
   const [isOnSale, setIsOnSale] = useState(false);
-  const [imageUrl1, setImageUrl1] = useState("");
-  const [imageUrl2, setImageUrl2] = useState("");
+  
+  // Image Upload State (Up to 7 images)
+  const [images, setImages] = useState<string[]>([]);
+  const [newImageUrl, setNewImageUrl] = useState("");
+  const [isUploadingImages, setIsUploadingImages] = useState(false);
+
   const [formError, setFormError] = useState("");
   const [formSuccess, setFormSuccess] = useState("");
   const [isSaving, setIsSaving] = useState(false);
@@ -79,18 +87,17 @@ export default function AdminProductsPage() {
     setSlug("");
     setName("");
     setSubtitle("");
+    setDescription("");
     setCategorySlug("women");
     setPrice(4990);
     setCompareAtPrice(5490);
     setStock(30);
-    setColorName("Ivory Silk");
-    setColorHex("#F7F1E8");
     setFabric("Pure Combed Organic Lawn");
     setIsNewArrival(true);
     setIsBestSeller(false);
     setIsOnSale(false);
-    setImageUrl1("");
-    setImageUrl2("");
+    setImages([]);
+    setNewImageUrl("");
     setEditingProduct(null);
     setFormError("");
     setFormSuccess("");
@@ -102,19 +109,94 @@ export default function AdminProductsPage() {
     setSlug(p.slug || p.id);
     setName(p.name);
     setSubtitle(p.subtitle || "");
+    setDescription(p.description || "");
     setCategorySlug(p.categorySlug || "women");
     setPrice(p.price);
     setCompareAtPrice(p.compareAtPrice || 0);
     setStock(p.stock || 20);
-    setColorName(p.colorName || "Ivory");
-    setColorHex(p.colorHex || "#F7F1E8");
     setFabric(p.fabric || "");
     setIsNewArrival(Boolean(p.isNewArrival));
     setIsBestSeller(Boolean(p.isBestSeller));
     setIsOnSale(Boolean(p.isOnSale));
-    setImageUrl1(p.images?.[0] || "");
-    setImageUrl2(p.images?.[1] || "");
+    setImages(p.images && p.images.length > 0 ? [...p.images].slice(0, 7) : []);
+    setNewImageUrl("");
     setShowAddModal(true);
+  };
+
+  const handleImageFiles = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const files = e.target.files;
+    if (!files || files.length === 0) return;
+
+    if (images.length + files.length > 7) {
+      setFormError("A maximum of 7 images can be uploaded per product.");
+      return;
+    }
+
+    setIsUploadingImages(true);
+    setFormError("");
+
+    const fileList = Array.from(files).slice(0, 7 - images.length);
+    const newImageUrls: string[] = [];
+
+    for (const file of fileList) {
+      if (!file.type.startsWith("image/")) continue;
+      
+      try {
+        const dataUrl = await new Promise<string>((resolve, reject) => {
+          const reader = new FileReader();
+          reader.onload = () => resolve(reader.result as string);
+          reader.onerror = reject;
+          reader.readAsDataURL(file);
+        });
+        newImageUrls.push(dataUrl);
+      } catch (err) {
+        console.error("Error reading file:", err);
+      }
+    }
+
+    setImages((prev) => [...prev, ...newImageUrls].slice(0, 7));
+    setIsUploadingImages(false);
+    // Reset file input
+    e.target.value = "";
+  };
+
+  const handleAddImageUrl = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!newImageUrl.trim()) return;
+
+    if (images.length >= 7) {
+      setFormError("Maximum of 7 images reached.");
+      return;
+    }
+
+    setImages((prev) => [...prev, newImageUrl.trim()].slice(0, 7));
+    setNewImageUrl("");
+    setFormError("");
+  };
+
+  const handleRemoveImage = (indexToRemove: number) => {
+    setImages((prev) => prev.filter((_, idx) => idx !== indexToRemove));
+  };
+
+  const handleMakeCover = (index: number) => {
+    if (index === 0) return;
+    setImages((prev) => {
+      const copy = [...prev];
+      const [item] = copy.splice(index, 1);
+      return [item, ...copy];
+    });
+  };
+
+  const handleMoveImage = (index: number, direction: -1 | 1) => {
+    const target = index + direction;
+    if (target < 0 || target >= images.length) return;
+    setImages((prev) => {
+      const copy = [...prev];
+      const temp = copy[index];
+      copy[index] = copy[target];
+      copy[target] = temp;
+      return copy;
+    });
   };
 
   const handleSaveProduct = async (e: React.FormEvent) => {
@@ -127,14 +209,9 @@ export default function AdminProductsPage() {
       return;
     }
 
-    const images: string[] = [];
-    if (imageUrl1.trim()) images.push(imageUrl1.trim());
-    if (imageUrl2.trim()) images.push(imageUrl2.trim());
-
     if (images.length === 0) {
-      images.push(
-        "https://images.unsplash.com/photo-1583391733956-3750e0ff4e8b?q=80&w=800&auto=format&fit=crop"
-      );
+      setFormError("Please upload or provide at least 1 product image (max 7).");
+      return;
     }
 
     setIsSaving(true);
@@ -148,8 +225,7 @@ export default function AdminProductsPage() {
       price: Number(price),
       compareAtPrice: compareAtPrice ? Number(compareAtPrice) : undefined,
       stock: Number(stock),
-      colorName,
-      colorHex,
+      description: description.trim(),
       fabric,
       isNewArrival,
       isBestSeller,
@@ -235,7 +311,7 @@ export default function AdminProductsPage() {
             resetForm();
             setShowAddModal(true);
           }}
-          className="inline-flex items-center gap-2 px-5 py-2.5 bg-[#151007] text-[#FAF7F2] text-xs font-sans uppercase tracking-widest hover:bg-[#3A2E21] transition-all cursor-pointer shadow-sm"
+          className="inline-flex items-center gap-2 px-5 py-2.5 bg-[#151007] text-[#FAF7F2] hover:text-[#FAF7F2] text-xs font-sans uppercase tracking-widest hover:bg-[#3A2E21] transition-all cursor-pointer shadow-sm"
         >
           <Plus size={15} />
           <span>Add New Product</span>
@@ -559,25 +635,168 @@ export default function AdminProductsPage() {
                 </div>
               </div>
 
-              {/* Image URLs */}
-              <div className="space-y-2 pt-1">
+              {/* Product Description */}
+              <div className="space-y-1">
                 <label className="block text-[11px] uppercase tracking-wider text-[#151007] font-medium">
-                  Product Image URLs
+                  Product Description
                 </label>
-                <input
-                  type="url"
-                  value={imageUrl1}
-                  onChange={(e) => setImageUrl1(e.target.value)}
-                  placeholder="Primary Photo URL (e.g. https://images.unsplash.com/...)"
-                  className="w-full bg-[#FAF7F2] border border-[#D8C9B6] p-2 focus:outline-none focus:border-[#907553]"
+                <textarea
+                  rows={4}
+                  value={description}
+                  onChange={(e) => setDescription(e.target.value)}
+                  placeholder="Enter detailed description of the outfit, embroidery craftsmanship, fabric feel, styling recommendations, and wash care..."
+                  className="w-full bg-[#FAF7F2] border border-[#D8C9B6] p-2.5 text-xs font-sans text-[#151007] placeholder-[#3A2E21]/50 focus:outline-none focus:border-[#907553] leading-relaxed"
                 />
-                <input
-                  type="url"
-                  value={imageUrl2}
-                  onChange={(e) => setImageUrl2(e.target.value)}
-                  placeholder="Secondary Photo URL (Optional)"
-                  className="w-full bg-[#FAF7F2] border border-[#D8C9B6] p-2 focus:outline-none focus:border-[#907553]"
-                />
+              </div>
+
+              {/* Product Images Manager (Up to 7 Images) */}
+              <div className="space-y-3 pt-2 border-t border-[#D8C9B6]/60">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <label className="block text-[11px] uppercase tracking-wider text-[#151007] font-semibold">
+                      Product Images (Max 7 Photos) *
+                    </label>
+                    <p className="text-[11px] text-[#3A2E21]/70">
+                      First image is the primary cover. Upload up to 7 photos showcasing fabric, cuts, &amp; details.
+                    </p>
+                  </div>
+                  <span className={`text-xs font-semibold px-2.5 py-0.5 border ${
+                    images.length > 0
+                      ? "bg-[#F7F1E8] text-[#907553] border-[#907553]"
+                      : "bg-red-50 text-red-700 border-red-300"
+                  }`}>
+                    {images.length} / 7 Uploaded
+                  </span>
+                </div>
+
+                {/* Upload & Add URL Controls */}
+                <div className="flex flex-col sm:flex-row gap-2">
+                  <label className={`inline-flex items-center justify-center gap-2 px-4 py-2 text-xs font-sans font-medium uppercase tracking-wider transition-all cursor-pointer border ${
+                    images.length >= 7
+                      ? "bg-gray-100 text-gray-400 border-gray-300 cursor-not-allowed"
+                      : "bg-[#151007] text-[#FAF7F2] border-[#151007] hover:bg-[#907553]"
+                  }`}>
+                    <Upload size={14} />
+                    <span>{isUploadingImages ? "Processing..." : "Upload Photos"}</span>
+                    <input
+                      type="file"
+                      multiple
+                      accept="image/*"
+                      disabled={images.length >= 7 || isUploadingImages}
+                      onChange={handleImageFiles}
+                      className="hidden"
+                    />
+                  </label>
+
+                  <div className="flex-1 flex gap-2">
+                    <input
+                      type="url"
+                      value={newImageUrl}
+                      onChange={(e) => setNewImageUrl(e.target.value)}
+                      placeholder="Or paste image URL (https://...)"
+                      disabled={images.length >= 7}
+                      className="flex-1 bg-[#FAF7F2] border border-[#D8C9B6] px-3 py-1.5 text-xs font-sans focus:outline-none focus:border-[#907553]"
+                    />
+                    <button
+                      type="button"
+                      onClick={handleAddImageUrl}
+                      disabled={!newImageUrl.trim() || images.length >= 7}
+                      className="px-3 py-1.5 text-xs font-sans bg-[#F7F1E8] border border-[#D8C9B6] text-[#151007] hover:bg-[#D8C9B6] disabled:opacity-50 cursor-pointer"
+                    >
+                      Add URL
+                    </button>
+                  </div>
+                </div>
+
+                {/* Thumbnails Grid (Up to 7 slots) */}
+                <div className="grid grid-cols-2 sm:grid-cols-4 md:grid-cols-7 gap-2 pt-2">
+                  {images.map((imgUrl, idx) => (
+                    <div
+                      key={idx}
+                      className={`group relative aspect-[3/4] bg-[#F2EAE0] border overflow-hidden transition-all ${
+                        idx === 0
+                          ? "border-[#907553] ring-1 ring-[#907553]"
+                          : "border-[#D8C9B6] hover:border-[#907553]"
+                      }`}
+                    >
+                      <Image
+                        src={imgUrl}
+                        alt={`Product Photo ${idx + 1}`}
+                        fill
+                        className="object-cover"
+                        unoptimized
+                      />
+
+                      {/* Primary Cover Badge */}
+                      {idx === 0 && (
+                        <div className="absolute top-1 left-1 bg-[#907553] text-[#FAF7F2] text-[9px] font-sans font-bold uppercase tracking-wider px-1.5 py-0.5 shadow-sm">
+                          Cover
+                        </div>
+                      )}
+
+                      {/* Action Overlays */}
+                      <div className="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 transition-opacity flex flex-col justify-between p-1 text-white">
+                        <div className="flex justify-between items-center">
+                          {idx !== 0 ? (
+                            <button
+                              type="button"
+                              onClick={() => handleMakeCover(idx)}
+                              title="Make Cover Image"
+                              className="p-1 hover:text-[#D8C9B6] bg-black/40 rounded cursor-pointer"
+                            >
+                              <Star size={12} />
+                            </button>
+                          ) : (
+                            <span />
+                          )}
+                          <button
+                            type="button"
+                            onClick={() => handleRemoveImage(idx)}
+                            title="Remove Photo"
+                            className="p-1 text-red-300 hover:text-red-100 bg-black/40 rounded cursor-pointer ml-auto"
+                          >
+                            <Trash2 size={12} />
+                          </button>
+                        </div>
+
+                        <div className="flex justify-between items-center text-[10px] bg-black/40 px-1 py-0.5 rounded">
+                          <button
+                            type="button"
+                            disabled={idx === 0}
+                            onClick={() => handleMoveImage(idx, -1)}
+                            className="p-0.5 disabled:opacity-30 hover:text-[#D8C9B6] cursor-pointer"
+                            title="Move Left"
+                          >
+                            <ArrowLeft size={11} />
+                          </button>
+                          <span className="text-[9px] font-mono">{idx + 1}/7</span>
+                          <button
+                            type="button"
+                            disabled={idx === images.length - 1}
+                            onClick={() => handleMoveImage(idx, 1)}
+                            className="p-0.5 disabled:opacity-30 hover:text-[#D8C9B6] cursor-pointer"
+                            title="Move Right"
+                          >
+                            <ArrowRight size={11} />
+                          </button>
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+
+                  {/* Empty Slots Fillers */}
+                  {Array.from({ length: Math.max(0, 7 - images.length) }).map((_, emptyIdx) => (
+                    <div
+                      key={`empty-${emptyIdx}`}
+                      className="aspect-[3/4] border border-dashed border-[#D8C9B6] bg-[#FAF7F2]/40 flex flex-col items-center justify-center p-2 text-center text-[#3A2E21]/40"
+                    >
+                      <ImageIcon size={18} className="opacity-40 mb-1" />
+                      <span className="text-[10px] font-sans">
+                        Slot {images.length + emptyIdx + 1}
+                      </span>
+                    </div>
+                  ))}
+                </div>
               </div>
 
               {/* Toggles */}
@@ -617,7 +836,7 @@ export default function AdminProductsPage() {
                 <button
                   type="button"
                   onClick={() => setShowAddModal(false)}
-                  className="px-4 py-2 border border-[#D8C9B6] hover:bg-[#F2EAE0]"
+                  className="px-4 py-2 border border-[#D8C9B6] text-[#151007] hover:text-[#151007] hover:bg-[#F2EAE0] transition-colors cursor-pointer"
                 >
                   Cancel
                 </button>
@@ -649,14 +868,14 @@ export default function AdminProductsPage() {
               <button
                 type="button"
                 onClick={() => setDeleteConfirmId(null)}
-                className="px-4 py-2 border border-[#D8C9B6] text-xs font-sans hover:bg-[#F2EAE0]"
+                className="px-4 py-2 border border-[#D8C9B6] text-xs font-sans text-[#151007] hover:text-[#151007] hover:bg-[#F2EAE0] transition-colors cursor-pointer"
               >
                 Cancel
               </button>
               <button
                 type="button"
                 onClick={() => handleDelete(deleteConfirmId)}
-                className="px-4 py-2 bg-red-700 text-white text-xs font-sans uppercase tracking-wider hover:bg-red-800"
+                className="px-4 py-2 bg-red-700 text-white hover:text-white text-xs font-sans uppercase tracking-wider hover:bg-red-800 transition-colors cursor-pointer"
               >
                 Delete
               </button>

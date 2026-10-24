@@ -1,11 +1,15 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import Link from "next/link";
+import Image from "next/image";
+import { useRouter } from "next/navigation";
 import { motion, AnimatePresence } from "framer-motion";
-import { X, ChevronDown, Search, Heart, User, ShoppingBag, ArrowRight } from "lucide-react";
+import { X, ChevronDown, Search, Heart, User, ShoppingBag, ArrowRight, Sparkles } from "lucide-react";
 import { navigationData } from "@/data/navigation";
 import { Logo } from "@/components/ui/Logo";
+import { searchProducts } from "@/services/catalogService";
+import { Product } from "@/data/products";
 
 interface MobileDrawerProps {
   isOpen: boolean;
@@ -13,7 +17,33 @@ interface MobileDrawerProps {
 }
 
 export const MobileDrawer: React.FC<MobileDrawerProps> = ({ isOpen, onClose }) => {
+  const router = useRouter();
   const [expandedItem, setExpandedItem] = useState<string | null>(null);
+  const [mobileQuery, setMobileQuery] = useState("");
+  const [searchResults, setSearchResults] = useState<Product[]>([]);
+  const [isSearching, setIsSearching] = useState(false);
+
+  useEffect(() => {
+    const q = mobileQuery.trim();
+    if (!q) {
+      setSearchResults([]);
+      return;
+    }
+
+    const timer = setTimeout(async () => {
+      setIsSearching(true);
+      try {
+        const results = await searchProducts(q);
+        setSearchResults(results);
+      } catch (e) {
+        console.error("Mobile search error:", e);
+      } finally {
+        setIsSearching(false);
+      }
+    }, 150);
+
+    return () => clearTimeout(timer);
+  }, [mobileQuery]);
 
   const toggleExpand = (label: string) => {
     setExpandedItem((prev) => (prev === label ? null : label));
@@ -54,16 +84,80 @@ export const MobileDrawer: React.FC<MobileDrawerProps> = ({ isOpen, onClose }) =
               </button>
             </div>
 
-            {/* Search Input in Mobile Drawer */}
-            <div className="p-4 border-b border-[#D8C9B6]/40 bg-[#F7F1E8]/60">
+            {/* Search Input in Mobile Drawer with Live Auto-Suggestions */}
+            <div className="p-4 border-b border-[#D8C9B6]/40 bg-[#F7F1E8]/60 relative">
               <div className="relative flex items-center">
                 <Search size={16} className="absolute left-3 text-[#3A2E21]/60" />
                 <input
                   type="text"
+                  value={mobileQuery}
+                  onChange={(e) => setMobileQuery(e.target.value)}
                   placeholder="Search for lawn, pret, kids..."
-                  className="w-full bg-[#FAF7F2] border border-[#D8C9B6] text-xs py-2.5 pl-9 pr-3 text-[#211A12] placeholder:text-[#3A2E21]/50 focus:outline-none focus:border-[#907553]"
+                  className="w-full bg-[#FAF7F2] border border-[#D8C9B6] text-xs py-2.5 pl-9 pr-8 text-[#211A12] placeholder:text-[#3A2E21]/50 focus:outline-none focus:border-[#907553]"
                 />
+                {mobileQuery && (
+                  <button
+                    type="button"
+                    onClick={() => setMobileQuery("")}
+                    className="absolute right-2.5 text-[#3A2E21]/50 hover:text-[#151007]"
+                  >
+                    <X size={14} />
+                  </button>
+                )}
               </div>
+
+              {/* Mobile Auto-Suggestions Results */}
+              {mobileQuery.trim() && (
+                <div className="mt-2 bg-[#FAF7F2] border border-[#D8C9B6] p-2 max-h-60 overflow-y-auto">
+                  <div className="flex items-center justify-between pb-1.5 border-b border-[#D8C9B6]/60 mb-1.5">
+                    <span className="text-[10px] font-sans uppercase tracking-wider text-[#907553] font-semibold flex items-center gap-1">
+                      <Sparkles size={11} />
+                      {isSearching ? "Searching..." : "Suggestions"}
+                    </span>
+                    <span className="text-[10px] text-[#3A2E21]/60">{searchResults.length} found</span>
+                  </div>
+
+                  {isSearching ? (
+                    <div className="py-4 text-center text-xs text-[#3A2E21]/60">Searching...</div>
+                  ) : searchResults.length > 0 ? (
+                    <div className="divide-y divide-[#D8C9B6]/40">
+                      {searchResults.map((product) => (
+                        <Link
+                          key={product.id}
+                          href={`/products/${product.id}`}
+                          onClick={() => {
+                            onClose();
+                            setMobileQuery("");
+                          }}
+                          className="py-2 px-1 flex items-center gap-2.5 hover:bg-[#F2EAE0] transition-colors"
+                        >
+                          <div className="relative w-9 h-11 bg-[#D8C9B6] shrink-0 overflow-hidden">
+                            {product.images?.[0] && (
+                              <Image
+                                src={product.images[0]}
+                                alt={product.name}
+                                fill
+                                sizes="36px"
+                                className="object-cover"
+                              />
+                            )}
+                          </div>
+                          <div className="flex-1 min-w-0">
+                            <p className="text-xs font-medium text-[#151007] truncate">{product.name}</p>
+                            <p className="text-[11px] font-semibold text-[#907553]">
+                              Rs. {product.price.toLocaleString()}
+                            </p>
+                          </div>
+                        </Link>
+                      ))}
+                    </div>
+                  ) : (
+                    <p className="py-3 text-center text-xs text-[#3A2E21]/60">
+                      No products found for &quot;{mobileQuery}&quot;
+                    </p>
+                  )}
+                </div>
+              )}
             </div>
 
             {/* Navigation Links */}
@@ -150,7 +244,7 @@ export const MobileDrawer: React.FC<MobileDrawerProps> = ({ isOpen, onClose }) =
             <div className="p-4 bg-[#F7F1E8] border-t border-[#D8C9B6] space-y-3">
               <div className="grid grid-cols-2 gap-2 text-xs font-sans">
                 <Link
-                  href="#wishlist"
+                  href="/wishlist"
                   onClick={onClose}
                   className="flex items-center gap-2 py-2 px-3 bg-[#FAF7F2] border border-[#D8C9B6] text-[#211A12] justify-center"
                 >

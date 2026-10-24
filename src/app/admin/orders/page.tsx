@@ -23,8 +23,10 @@ import {
   X,
   AlertTriangle,
   Ruler,
+  Printer,
 } from "lucide-react";
 import Image from "next/image";
+import { OrderInvoiceModal } from "@/components/invoice/OrderInvoiceModal";
 
 const formatPrice = (amount: number) =>
   `PKR ${amount.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ",")}`;
@@ -36,6 +38,7 @@ export default function AdminOrdersPage() {
   const [selectedOrder, setSelectedOrder] = useState<AdminOrder | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [deleteConfirmId, setDeleteConfirmId] = useState<string | null>(null);
+  const [showInvoiceModal, setShowInvoiceModal] = useState(false);
 
   const loadOrders = async () => {
     setIsLoading(true);
@@ -297,13 +300,23 @@ export default function AdminOrdersPage() {
                   {selectedOrder.orderNumber}
                 </h3>
               </div>
-              <button
-                type="button"
-                onClick={() => setSelectedOrder(null)}
-                className="p-1.5 text-[#3A2E21] hover:text-[#151007] cursor-pointer"
-              >
-                <X size={20} />
-              </button>
+              <div className="flex items-center gap-2">
+                <button
+                  type="button"
+                  onClick={() => setShowInvoiceModal(true)}
+                  className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-[#907553] text-[#FAF7F2] text-xs font-sans uppercase tracking-wider hover:bg-[#A38662] transition-colors cursor-pointer"
+                >
+                  <Printer size={13} />
+                  <span>Print Invoice</span>
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setSelectedOrder(null)}
+                  className="p-1.5 text-[#3A2E21] hover:text-[#151007] cursor-pointer"
+                >
+                  <X size={20} />
+                </button>
+              </div>
             </div>
 
             {/* Customer & Shipping Summary Grid */}
@@ -448,7 +461,7 @@ export default function AdminOrdersPage() {
               <button
                 type="button"
                 onClick={() => setSelectedOrder(null)}
-                className="px-6 py-2 bg-[#151007] text-[#FAF7F2] text-xs font-sans uppercase tracking-wider hover:bg-[#3A2E21] cursor-pointer"
+                className="px-6 py-2 bg-[#151007] text-[#FAF7F2] hover:text-[#FAF7F2] text-xs font-sans uppercase tracking-wider hover:bg-[#3A2E21] transition-colors cursor-pointer"
               >
                 Done
               </button>
@@ -476,20 +489,28 @@ export default function AdminOrdersPage() {
               <button
                 type="button"
                 onClick={() => setDeleteConfirmId(null)}
-                className="px-4 py-2 border border-[#D8C9B6] text-xs font-sans hover:bg-[#F2EAE0]"
+                className="px-4 py-2 border border-[#D8C9B6] text-xs font-sans text-[#151007] hover:text-[#151007] hover:bg-[#F2EAE0] transition-colors cursor-pointer"
               >
                 Cancel
               </button>
               <button
                 type="button"
                 onClick={() => handleDelete(deleteConfirmId)}
-                className="px-4 py-2 bg-red-700 text-white text-xs font-sans uppercase tracking-wider hover:bg-red-800"
+                className="px-4 py-2 bg-red-700 text-white hover:text-white text-xs font-sans uppercase tracking-wider hover:bg-red-800 transition-colors cursor-pointer"
               >
                 Delete Order
               </button>
             </div>
           </div>
         </div>
+      )}
+
+      {/* Printable Invoice Modal */}
+      {showInvoiceModal && selectedOrder && (
+        <OrderInvoiceModal
+          order={selectedOrder}
+          onClose={() => setShowInvoiceModal(false)}
+        />
       )}
     </div>
   );

@@ -13,13 +13,17 @@ function AdminLayoutInner({ children }: { children: React.ReactNode }) {
   const isLoginPage = pathname === "/admin/login";
 
   useEffect(() => {
-    if (!isLoading && !isAuthenticated && !isLoginPage) {
-      router.push("/admin/login");
+    if (isLoginPage) {
+      router.replace("/login");
+      return;
+    }
+    if (!isLoading && !isAuthenticated) {
+      router.push("/login");
     }
   }, [isAuthenticated, isLoading, isLoginPage, router]);
 
   if (isLoginPage) {
-    return <>{children}</>;
+    return null;
   }
 
   if (isLoading) {

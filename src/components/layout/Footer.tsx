@@ -4,6 +4,7 @@ import React, { useState } from "react";
 import Link from "next/link";
 import { ChevronDown } from "lucide-react";
 import { Logo } from "@/components/ui/Logo";
+import { FabricGuaranteeBadge } from "@/components/ui/FabricGuaranteeBadge";
 import {
   InstagramIcon,
   FacebookIcon,
@@ -31,7 +32,7 @@ export const Footer: React.FC = () => {
       { name: "Collections", href: "/products" },
     ],
     help: [
-      { name: "Track Order", href: "#" },
+      { name: "Track Order", href: "/track-order" },
       { name: "Shipping Policy", href: "#" },
       { name: "Returns & Exchange", href: "#" },
       { name: "Size Guide", href: "#" },
@@ -47,6 +48,11 @@ export const Footer: React.FC = () => {
   return (
     <footer className="bg-[#FAF7F2] border-t border-[#D8C9B6] text-[#211A12] pt-14 pb-8 sm:pt-16 sm:pb-12">
       <div className="max-w-[1440px] mx-auto px-4 sm:px-8 lg:px-12">
+        {/* Atelier 100% Original Fabric & Handcrafted Artisan Guarantee Strip */}
+        <div className="mb-12 pb-8 border-b border-[#D8C9B6]/60">
+          <FabricGuaranteeBadge />
+        </div>
+
         <div className="grid grid-cols-1 md:grid-cols-12 gap-8 lg:gap-12 pb-12 border-b border-[#D8C9B6]/60">
           {/* Brand Info */}
           <div className="md:col-span-4 flex flex-col items-start space-y-4">

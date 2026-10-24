@@ -87,7 +87,7 @@ export const ProductSection: React.FC<ProductSectionProps> = ({
             size="md"
             href={viewAllHref}
             withArrow
-            className="px-8 sm:px-12 py-3.5 border-[#3A2E21]/30 hover:border-[#151007] hover:bg-[#151007] hover:text-[#FAF7F2] transition-all shadow-sm"
+            className="px-8 sm:px-12 py-3.5 shadow-sm"
           >
             VIEW ALL PRODUCTS
           </Button>

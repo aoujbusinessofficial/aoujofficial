@@ -70,3 +70,12 @@ body {
 .luxury-tracking {
   letter-spacing: 0.18em;
 }
+
+/* Maintain contrast and visibility on hover */
+button, a {
+  -webkit-font-smoothing: antialiased;
+}
+
+button:disabled {
+  cursor: not-allowed;
+}

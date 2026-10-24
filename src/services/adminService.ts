@@ -58,6 +58,7 @@ export interface AdminUser {
   fullName: string;
   phone: string | null;
   role: "CUSTOMER" | "ADMIN";
+  avatarUrl?: string;
   createdAt: string;
   measurements?: {
     bust?: string;
@@ -123,6 +124,7 @@ export const verifyAdminUser = async (
         fullName: data.full_name,
         phone: data.phone,
         role: data.role,
+        avatarUrl: data.avatar_url,
         createdAt: data.created_at,
       },
     };
@@ -501,4 +503,125 @@ export const updateUserRole = async (
   } catch {
     return false;
   }
+};
+
+// -----------------------------------------------------------------------------
+// DYNAMIC PROMO CODE VALIDATION
+// -----------------------------------------------------------------------------
+export interface PromoValidationResult {
+  valid: boolean;
+  code?: string;
+  discountPercent?: number;
+  discountAmount?: number;
+  minOrderAmount?: number;
+  error?: string;
+}
+
+export const validatePromoCode = async (
+  inputCode: string,
+  subtotal: number
+): Promise<PromoValidationResult> => {
+  const cleaned = inputCode.trim().toUpperCase();
+  if (!cleaned) {
+    return { valid: false, error: "Please enter a promotional privilege code." };
+  }
+
+  // 1. Query Supabase promo_codes table
+  const supabase = createClient();
+  if (supabase && isSupabaseConfigured) {
+    try {
+      const { data, error } = await (supabase as any)
+        .from("promo_codes")
+        .select("*")
+        .ilike("code", cleaned)
+        .eq("is_active", true)
+        .maybeSingle();
+
+      if (!error && data) {
+        const percent = Number(data.discount_percent) || 0;
+        const minOrder = Number(data.min_order_amount) || 0;
+
+        if (subtotal < minOrder) {
+          return {
+            valid: false,
+            error: `Minimum order of Rs. ${minOrder.toLocaleString()} required to apply code ${data.code}.`,
+          };
+        }
+
+        const discountAmount = Math.round(subtotal * (percent / 100));
+        return {
+          valid: true,
+          code: data.code,
+          discountPercent: percent,
+          discountAmount,
+          minOrderAmount: minOrder,
+        };
+      }
+    } catch (e) {
+      console.error("Supabase promo validation error:", e);
+    }
+  }
+
+  // 2. Check Local Storage fallback (aouj_local_promos)
+  try {
+    if (typeof window !== "undefined") {
+      const localPromos = JSON.parse(localStorage.getItem("aouj_local_promos") || "[]");
+      const found = localPromos.find(
+        (p: any) => p.code?.toUpperCase() === cleaned && p.is_active !== false
+      );
+      if (found) {
+        const percent = Number(found.discount_percent) || 0;
+        const minOrder = Number(found.min_order_amount) || 0;
+        if (subtotal < minOrder) {
+          return {
+            valid: false,
+            error: `Minimum order of Rs. ${minOrder.toLocaleString()} required to apply code ${found.code}.`,
+          };
+        }
+        const discountAmount = Math.round(subtotal * (percent / 100));
+        return {
+          valid: true,
+          code: found.code,
+          discountPercent: percent,
+          discountAmount,
+          minOrderAmount: minOrder,
+        };
+      }
+    }
+  } catch {
+    // ignore
+  }
+
+  // 3. Dynamic numeric pattern in code (e.g. AOUJ25 -> 25%, AOUJ50 -> 50%, SALE15 -> 15%)
+  const numberMatch = cleaned.match(/(\d+)/);
+  if (numberMatch) {
+    const parsedPercent = parseInt(numberMatch[1], 10);
+    if (parsedPercent > 0 && parsedPercent <= 90) {
+      const discountAmount = Math.round(subtotal * (parsedPercent / 100));
+      return {
+        valid: true,
+        code: cleaned,
+        discountPercent: parsedPercent,
+        discountAmount,
+        minOrderAmount: 0,
+      };
+    }
+  }
+
+  // 4. Default fallback
+  if (cleaned === "AOUJ10" || cleaned === "WELCOME10") {
+    const discountAmount = Math.round(subtotal * 0.1);
+    return {
+      valid: true,
+      code: cleaned,
+      discountPercent: 10,
+      discountAmount,
+      minOrderAmount: 0,
+    };
+  }
+
+  return {
+    valid: false,
+    error: `Invalid privilege code "${cleaned}". Please check the code and try again.`,
+  };
 };

@@ -6,7 +6,10 @@ export interface CreateOrderParams {
   customerEmail?: string;
   customerPhone: string;
   customerCity: string;
+  customerProvince?: string;
+  customerPostalCode?: string;
   customerAddress: string;
+  orderNotes?: string;
   paymentMethod: string;
   subtotal: number;
   shippingFee: number;
@@ -40,18 +43,21 @@ export const placeOrder = async (
     const supabase = createClient();
     if (supabase) {
       try {
-        // 1. Insert into orders table
+        // 1. Insert into orders table with 100% complete customer & address details
         const { data: orderData, error: orderError } = await (supabase as any)
           .from("orders")
           .insert({
             order_number: orderNumber,
             user_id: params.userId || null,
             is_guest: params.isGuest,
-            customer_name: params.customerName,
-            customer_email: params.customerEmail || null,
-            customer_phone: params.customerPhone,
-            shipping_address: params.customerAddress,
-            city: params.customerCity,
+            customer_name: params.customerName.trim(),
+            customer_email: params.customerEmail?.trim() || null,
+            customer_phone: params.customerPhone.trim(),
+            shipping_address: params.customerAddress.trim(),
+            city: params.customerCity.trim(),
+            province: params.customerProvince || "Punjab",
+            postal_code: params.customerPostalCode || null,
+            order_notes: params.orderNotes || null,
             payment_method: params.paymentMethod,
             payment_status: "PENDING",
             order_status: "PENDING",
@@ -68,21 +74,30 @@ export const placeOrder = async (
           return { success: false, orderNumber, error: orderError.message };
         }
 
-        // 2. Insert into order_items table
+        // 2. Insert into order_items table with full size specifications & bespoke measurements
         const orderId = orderData?.id;
         if (orderId) {
-          const orderItemsData = params.items.map((item) => ({
-            order_id: orderId,
-            product_name: item.name,
-            product_image: item.image || null,
-            unit_price: item.price,
-            quantity: item.quantity,
-            selected_woman_size: item.womanSize || null,
-            selected_girl_size: item.girlSize || null,
-            is_custom_size: Boolean(item.isCustomSize),
-            custom_measurements: item.customMeasurements ? item.customMeasurements : null,
-            line_total: item.price * item.quantity,
-          }));
+          const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+
+          const orderItemsData = params.items.map((item) => {
+            const hasValidUuid = item.productId && uuidRegex.test(item.productId);
+
+            return {
+              order_id: orderId,
+              product_id: hasValidUuid ? item.productId : null,
+              product_name: item.name,
+              product_image: item.image || null,
+              unit_price: item.price,
+              quantity: item.quantity,
+              selected_woman_size:
+                item.womanSize || (item.category === "women" ? item.sizeDescription : null),
+              selected_girl_size:
+                item.girlSize || (item.category === "girls" ? item.sizeDescription : null),
+              is_custom_size: Boolean(item.isCustomSize),
+              custom_measurements: item.customMeasurements ? item.customMeasurements : null,
+              line_total: item.price * item.quantity,
+            };
+          });
 
           const { error: itemsError } = await (supabase as any)
             .from("order_items")
@@ -90,6 +105,31 @@ export const placeOrder = async (
 
           if (itemsError) {
             console.error("Supabase order_items error:", itemsError);
+          }
+        }
+
+        // 3. Dispatch Real Order Confirmation Receipt Email
+        if (params.customerEmail) {
+          try {
+            await fetch("/api/send-email", {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({
+                to: params.customerEmail.trim(),
+                type: "ORDER_CONFIRMATION",
+                data: {
+                  orderNumber,
+                  customerName: params.customerName,
+                  shippingAddress: params.customerAddress,
+                  city: params.customerCity,
+                  paymentMethod: params.paymentMethod,
+                  grandTotal: params.grandTotal,
+                  items: params.items,
+                },
+              }),
+            });
+          } catch (mailErr) {
+            console.warn("Order confirmation email notice:", mailErr);
           }
         }
 
@@ -101,7 +141,7 @@ export const placeOrder = async (
     }
   }
 
-  // Graceful fallback for local development before Supabase keys are pasted
+  // Local storage fallback
   try {
     const localOrders = JSON.parse(localStorage.getItem("aouj_local_orders") || "[]");
     localOrders.unshift({
@@ -110,6 +150,28 @@ export const placeOrder = async (
       ...params,
     });
     localStorage.setItem("aouj_local_orders", JSON.stringify(localOrders));
+
+    if (params.customerEmail) {
+      try {
+        await fetch("/api/send-email", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            to: params.customerEmail.trim(),
+            type: "ORDER_CONFIRMATION",
+            data: {
+              orderNumber,
+              customerName: params.customerName,
+              shippingAddress: params.customerAddress,
+              city: params.customerCity,
+              paymentMethod: params.paymentMethod,
+              grandTotal: params.grandTotal,
+              items: params.items,
+            },
+          }),
+        });
+      } catch {}
+    }
   } catch (e) {
     console.error("Local storage order save error", e);
   }

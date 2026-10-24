@@ -78,9 +78,9 @@ export const ProductCard: React.FC<ProductCardProps> = ({ product, className = "
               isHovered ? "opacity-100 translate-y-0" : "opacity-0 translate-y-2 pointer-events-none"
             }`}
           >
-            <div className="w-full py-2.5 bg-[#FAF7F2]/95 hover:bg-[#151007] hover:text-[#FAF7F2] text-[#151007] text-[10px] tracking-[0.2em] uppercase font-sans font-medium backdrop-blur-sm transition-colors duration-200 border border-[#D8C9B6] text-center flex items-center justify-center gap-1.5 shadow-sm">
-              <span>SELECT SIZE &amp; SHOP</span>
-              <ArrowRight size={12} />
+            <div className="w-full py-2.5 bg-[#FAF7F2]/95 hover:bg-[#151007] text-[#151007] hover:text-[#FAF7F2] text-[10px] tracking-[0.2em] uppercase font-sans font-medium backdrop-blur-sm transition-all duration-200 border border-[#D8C9B6] hover:border-[#151007] text-center flex items-center justify-center gap-1.5 shadow-sm">
+              <span className="inherit">SELECT SIZE &amp; SHOP</span>
+              <ArrowRight size={12} className="inherit" />
             </div>
           </div>
         </Link>
@@ -94,7 +94,7 @@ export const ProductCard: React.FC<ProductCardProps> = ({ product, className = "
 
         {/* Wishlist Button in Top Right (Outside Link to avoid nested button in anchor) */}
         <div className="absolute top-2.5 right-2.5 z-10 transition-opacity duration-300 sm:opacity-90 sm:group-hover:opacity-100">
-          <WishlistButton initialState={product.isWishlisted} />
+          <WishlistButton product={product} />
         </div>
       </div>
 

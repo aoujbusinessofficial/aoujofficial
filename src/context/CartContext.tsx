@@ -116,8 +116,8 @@ export const CartProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   const totalCount = items.reduce((sum, item) => sum + item.quantity, 0);
   const subtotal = items.reduce((sum, item) => sum + item.price * item.quantity, 0);
-  // Free shipping on orders above PKR 5,000, otherwise standard 250 PKR
-  const shippingFee = subtotal === 0 || subtotal >= 5000 ? 0 : 250;
+  // Fixed shipping charges of PKR 350 for every order
+  const shippingFee = subtotal === 0 ? 0 : 350;
   const grandTotal = subtotal + shippingFee;
 
   return (

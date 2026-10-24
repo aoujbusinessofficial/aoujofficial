@@ -31,13 +31,13 @@ export const Button: React.FC<ButtonProps> = ({
 
   const variantStyles = {
     primary:
-      "bg-[#151007] text-[#FAF7F2] border border-[#151007] hover:bg-[#3A2E21] hover:border-[#3A2E21] active:scale-[0.99]",
+      "bg-[#151007] text-[#FAF7F2] border border-[#151007] hover:bg-[#3A2E21] hover:text-[#FAF7F2] hover:border-[#3A2E21] active:scale-[0.99]",
     secondary:
-      "bg-[#F7F1E8] text-[#151007] border border-[#D8C9B6] hover:bg-[#FAF7F2] hover:border-[#907553] active:scale-[0.99]",
+      "bg-[#F7F1E8] text-[#151007] border border-[#D8C9B6] hover:bg-[#151007] hover:text-[#FAF7F2] hover:border-[#151007] active:scale-[0.99]",
     outline:
-      "bg-transparent text-[#151007] border border-[#211A12] hover:bg-[#151007] hover:text-[#FAF7F2] active:scale-[0.99]",
+      "bg-transparent text-[#151007] border border-[#211A12] hover:bg-[#151007] hover:text-[#FAF7F2] hover:border-[#151007] active:scale-[0.99]",
     champagne:
-      "bg-[#907553] text-[#FAF7F2] border border-[#907553] hover:bg-[#7D6444] active:scale-[0.99]",
+      "bg-[#907553] text-[#FAF7F2] border border-[#907553] hover:bg-[#7D6444] hover:text-[#FAF7F2] hover:border-[#7D6444] active:scale-[0.99]",
     link:
       "bg-transparent text-[#211A12] p-0 border-b border-transparent hover:border-[#907553] hover:text-[#907553] tracking-[0.16em]",
   };

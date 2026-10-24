@@ -58,11 +58,16 @@ export default function SignupPage() {
 
     setIsLoading(true);
     try {
-      await signup(name, email, phone);
-      setSuccessMessage("Your AOUJ account has been created. Redirecting...");
-      setTimeout(() => {
-        router.push("/products");
-      }, 1000);
+      const res = await signup(name, email, password, phone);
+      if (res.success) {
+        setSuccessMessage("Your AOUJ account has been created. Redirecting...");
+        setTimeout(() => {
+          router.push("/products");
+        }, 1000);
+      } else {
+        setError(res.error || "Unable to create account. Please try again.");
+        setIsLoading(false);
+      }
     } catch {
       setError("Unable to create account. Please try again.");
       setIsLoading(false);

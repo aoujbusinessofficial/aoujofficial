@@ -38,15 +38,33 @@ export default function AdminPromosPage() {
   const loadPromos = async () => {
     setIsLoading(true);
     if (!isSupabaseConfigured) {
-      setPromos([
-        {
-          id: "local-1",
-          code: "AOUJ10",
-          discount_percent: 10,
-          min_order_amount: 5000,
-          is_active: true,
-        },
-      ]);
+      try {
+        const local = JSON.parse(localStorage.getItem("aouj_local_promos") || "[]");
+        if (local.length === 0) {
+          const defaults = [
+            {
+              id: "local-1",
+              code: "AOUJ10",
+              discount_percent: 10,
+              min_order_amount: 5000,
+              is_active: true,
+            },
+            {
+              id: "local-2",
+              code: "AOUJ25",
+              discount_percent: 25,
+              min_order_amount: 0,
+              is_active: true,
+            },
+          ];
+          localStorage.setItem("aouj_local_promos", JSON.stringify(defaults));
+          setPromos(defaults);
+        } else {
+          setPromos(local);
+        }
+      } catch {
+        setPromos([]);
+      }
       setIsLoading(false);
       return;
     }
@@ -57,7 +75,15 @@ export default function AdminPromosPage() {
         .from("promo_codes")
         .select("*")
         .order("created_at", { ascending: false });
-      setPromos(data || []);
+
+      if (data && data.length > 0) {
+        setPromos(data);
+        try {
+          localStorage.setItem("aouj_local_promos", JSON.stringify(data));
+        } catch {}
+      } else {
+        setPromos([]);
+      }
     }
     setIsLoading(false);
   };
@@ -73,6 +99,7 @@ export default function AdminPromosPage() {
     setIsSaving(true);
     const cleanedCode = newCode.trim().toUpperCase();
 
+    // 1. Save to Supabase if configured
     if (isSupabaseConfigured) {
       const supabase = createClient();
       if (supabase) {
@@ -91,7 +118,21 @@ export default function AdminPromosPage() {
       }
     }
 
-    setFeedback(`Promo code ${cleanedCode} created successfully!`);
+    // 2. Also sync to localStorage
+    try {
+      const local = JSON.parse(localStorage.getItem("aouj_local_promos") || "[]");
+      const filtered = local.filter((p: any) => p.code?.toUpperCase() !== cleanedCode);
+      filtered.unshift({
+        id: "promo-" + Date.now(),
+        code: cleanedCode,
+        discount_percent: Number(discountPercent),
+        min_order_amount: Number(minOrder),
+        is_active: true,
+      });
+      localStorage.setItem("aouj_local_promos", JSON.stringify(filtered));
+    } catch {}
+
+    setFeedback(`Promo code ${cleanedCode} (${discountPercent}% OFF) created successfully!`);
     setNewCode("");
     await loadPromos();
     setIsSaving(false);
@@ -103,6 +144,17 @@ export default function AdminPromosPage() {
     setPromos((prev) =>
       prev.map((p) => (p.id === promo.id ? { ...p, is_active: updatedStatus } : p))
     );
+
+    // Sync localStorage
+    try {
+      const local = JSON.parse(localStorage.getItem("aouj_local_promos") || "[]");
+      const updated = local.map((p: any) =>
+        p.id === promo.id || p.code?.toUpperCase() === promo.code?.toUpperCase()
+          ? { ...p, is_active: updatedStatus }
+          : p
+      );
+      localStorage.setItem("aouj_local_promos", JSON.stringify(updated));
+    } catch {}
 
     if (isSupabaseConfigured) {
       const supabase = createClient();
@@ -117,6 +169,13 @@ export default function AdminPromosPage() {
 
   const handleDeletePromo = async (promoId: string) => {
     setPromos((prev) => prev.filter((p) => p.id !== promoId));
+
+    // Sync localStorage
+    try {
+      const local = JSON.parse(localStorage.getItem("aouj_local_promos") || "[]");
+      const updated = local.filter((p: any) => p.id !== promoId);
+      localStorage.setItem("aouj_local_promos", JSON.stringify(updated));
+    } catch {}
 
     if (isSupabaseConfigured) {
       const supabase = createClient();

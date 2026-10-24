@@ -7,10 +7,10 @@ export interface BenefitItem {
 
 export const benefitsData: BenefitItem[] = [
   {
-    id: "free-shipping",
+    id: "nationwide-delivery",
     iconName: "Truck",
-    title: "FREE SHIPPING",
-    description: "On orders above PKR 5,000",
+    title: "NATIONWIDE DELIVERY",
+    description: "Standard delivery across Pakistan",
   },
   {
     id: "easy-returns",

@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, use } from "react";
+import React, { useState, useEffect, use } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import { notFound, useRouter } from "next/navigation";
@@ -9,6 +9,12 @@ import { Header } from "@/components/layout/Header";
 import { AnnouncementBar } from "@/components/layout/AnnouncementBar";
 import { Footer } from "@/components/layout/Footer";
 import { ProductCard } from "@/components/product/ProductCard";
+import { ProductReviews } from "@/components/product/ProductReviews";
+import { WishlistButton } from "@/components/product/WishlistButton";
+import { RecentlyViewed, recordProductView } from "@/components/product/RecentlyViewed";
+import { FabricGuaranteeBadge } from "@/components/ui/FabricGuaranteeBadge";
+import { ReturnExchangeModal } from "@/components/ui/ReturnExchangeModal";
+import { fetchProductByIdOrSlug, fetchCustomerProducts } from "@/services/catalogService";
 import {
   allProducts,
   Product,
@@ -17,6 +23,7 @@ import {
 } from "@/data/products";
 import {
   ChevronRight,
+  ChevronLeft,
   Ruler,
   Truck,
   RotateCcw,
@@ -26,6 +33,11 @@ import {
   Sparkles,
   Users,
   Heart,
+  Star,
+  ZoomIn,
+  ZoomOut,
+  Maximize2,
+  X,
 } from "lucide-react";
 
 interface ProductPageProps {
@@ -34,47 +46,131 @@ interface ProductPageProps {
 
 export default function ProductDetailPage({ params }: ProductPageProps) {
   const resolvedParams = use(params);
-  const product = allProducts.find((p) => p.id === resolvedParams.id);
+  const router = useRouter();
+  const { addToCart } = useCart();
 
-  if (!product) {
-    notFound();
-  }
+  const [product, setProduct] = useState<Product | null>(null);
+  const [isLoading, setIsLoading] = useState<boolean>(true);
+  const [relatedProducts, setRelatedProducts] = useState<Product[]>([]);
 
+  // Interactive Zoom & Lightbox State
   const [activeImageIndex, setActiveImageIndex] = useState(0);
-  const [selectedColor, setSelectedColor] = useState(product.colors[0]?.name || "");
+  const [isHoverZooming, setIsHoverZooming] = useState(false);
+  const [mousePos, setMousePos] = useState({ x: 50, y: 50 });
+  const [isLightboxOpen, setIsLightboxOpen] = useState(false);
+  const [lightboxZoom, setLightboxZoom] = useState(1);
 
-  // Size selections
+  // Sizing selections
+  const [selectedColor, setSelectedColor] = useState("");
   const [selectedWomanSize, setSelectedWomanSize] = useState<string>("Medium (M)");
   const [selectedGirlSize, setSelectedGirlSize] = useState<string>("3-4 Years");
   const [includeGirlPiece, setIncludeGirlPiece] = useState<boolean>(true);
-
-  // Single size selection for non-family products
-  const [selectedSingleSize, setSelectedSingleSize] = useState<string>(
-    product.sizes[0] || (product.category === "girls" ? "3-4 Years" : "Medium (M)")
-  );
-
+  const [selectedSingleSize, setSelectedSingleSize] = useState<string>("Medium (M)");
   const [quantity, setQuantity] = useState(1);
   const [showSizeModal, setShowSizeModal] = useState(false);
   const [sizeModalTab, setSizeModalTab] = useState<"girls" | "women">("girls");
   const [addedToBag, setAddedToBag] = useState(false);
 
-  const router = useRouter();
-  const { addToCart } = useCart();
-
   // Custom size form state
-  const isCustomSelected =
-    product.category === "family"
-      ? selectedWomanSize.toLowerCase().includes("custom") ||
-        (includeGirlPiece && selectedGirlSize.toLowerCase().includes("custom"))
-      : selectedSingleSize.toLowerCase().includes("custom");
-
   const [customAge, setCustomAge] = useState("");
   const [customChest, setCustomChest] = useState("");
   const [customLength, setCustomLength] = useState("");
   const [customWaist, setCustomWaist] = useState("");
   const [customNotes, setCustomNotes] = useState("");
 
-  // Computed summary of selected sizes
+  useEffect(() => {
+    let isMounted = true;
+    async function loadProductData() {
+      setIsLoading(true);
+      // Fetch strictly from live database collection (no demo mock fallback)
+      const p = await fetchProductByIdOrSlug(resolvedParams.id);
+
+      if (isMounted) {
+        setProduct(p);
+        if (p) {
+          // Record product view for Recently Viewed carousel
+          recordProductView(p);
+
+          setSelectedColor(p.colors[0]?.name || "Ivory");
+          setSelectedSingleSize(
+            p.sizes[0] || (p.category === "girls" ? "3-4 Years" : "Medium (M)")
+          );
+
+          // Fetch related pieces ("Complete the Look" / "You May Also Like")
+          const allItems = await fetchCustomerProducts();
+          const related = allItems
+            .filter((item) => item.id !== p!.id)
+            .sort((a, b) => (a.category === p!.category ? -1 : 1))
+            .slice(0, 4);
+          setRelatedProducts(related);
+        }
+        setIsLoading(false);
+      }
+    }
+
+    loadProductData();
+    return () => {
+      isMounted = false;
+    };
+  }, [resolvedParams.id]);
+
+  const handleMouseMove = (e: React.MouseEvent<HTMLDivElement>) => {
+    const rect = e.currentTarget.getBoundingClientRect();
+    const x = Math.max(0, Math.min(100, ((e.clientX - rect.left) / rect.width) * 100));
+    const y = Math.max(0, Math.min(100, ((e.clientY - rect.top) / rect.height) * 100));
+    setMousePos({ x, y });
+  };
+
+  if (isLoading) {
+    return (
+      <div className="min-h-screen flex flex-col bg-[#FAF7F2] text-[#211A12]">
+        <AnnouncementBar />
+        <Header />
+        <div className="flex-1 flex flex-col items-center justify-center p-8 text-center space-y-4">
+          <div className="w-10 h-10 border-2 border-[#907553] border-t-transparent rounded-full animate-spin" />
+          <p className="font-serif text-lg text-[#151007]">Loading Atelier Creation...</p>
+        </div>
+        <Footer />
+      </div>
+    );
+  }
+
+  if (!product) {
+    return (
+      <div className="min-h-screen flex flex-col bg-[#FAF7F2] text-[#211A12]">
+        <AnnouncementBar />
+        <Header />
+        <div className="flex-1 flex flex-col items-center justify-center p-8 text-center max-w-md mx-auto space-y-4 my-12">
+          <p className="text-[11px] uppercase tracking-[0.25em] text-[#907553] font-semibold">
+            ATELIER ARCHIVE
+          </p>
+          <h2
+            className="text-3xl text-[#151007]"
+            style={{ fontFamily: "var(--font-cormorant), Georgia, serif" }}
+          >
+            Product Not Found
+          </h2>
+          <p className="text-xs sm:text-sm font-sans text-[#3A2E21]/80 leading-relaxed">
+            The requested design may have been archived or is no longer in the active catalog.
+          </p>
+          <Link
+            href="/products"
+            className="inline-block px-6 py-3 bg-[#151007] text-[#FAF7F2] text-xs uppercase tracking-widest font-sans font-medium hover:bg-[#907553] transition-colors"
+          >
+            View Available Collections
+          </Link>
+        </div>
+        <Footer />
+      </div>
+    );
+  }
+
+  const isCustomSelected =
+    product.category === "family"
+      ? selectedWomanSize.toLowerCase().includes("custom") ||
+        (includeGirlPiece && selectedGirlSize.toLowerCase().includes("custom"))
+      : selectedSingleSize.toLowerCase().includes("custom");
+
   const selectedSizeDescription =
     product.category === "family"
       ? includeGirlPiece
@@ -82,7 +178,6 @@ export default function ProductDetailPage({ params }: ProductPageProps) {
         : `Woman Only: ${selectedWomanSize}`
       : selectedSingleSize;
 
-  // Price adjustment for family (optional discount if only woman)
   const currentPrice =
     product.category === "family" && !includeGirlPiece
       ? Math.round(product.price * 0.65)
@@ -169,10 +264,6 @@ export default function ProductDetailPage({ params }: ProductPageProps) {
     router.push("/cart");
   };
 
-  const relatedProducts = allProducts
-    .filter((p) => p.category === product.category && p.id !== product.id)
-    .slice(0, 4);
-
   return (
     <div className="min-h-screen flex flex-col bg-[#FAF7F2] text-[#211A12]">
       <AnnouncementBar />
@@ -231,21 +322,57 @@ export default function ProductDetailPage({ params }: ProductPageProps) {
               ))}
             </div>
 
-            {/* Main Featured Image */}
-            <div className="relative aspect-[3/4] sm:aspect-[4/5] flex-1 w-full overflow-hidden bg-[#F2EAE0]">
+            {/* Main Featured Image with Interactive Zoom */}
+            <div
+              onMouseEnter={() => setIsHoverZooming(true)}
+              onMouseLeave={() => setIsHoverZooming(false)}
+              onMouseMove={handleMouseMove}
+              onClick={() => setIsLightboxOpen(true)}
+              className="relative aspect-[3/4] sm:aspect-[4/5] flex-1 w-full overflow-hidden bg-[#F2EAE0] cursor-zoom-in group select-none border border-[#D8C9B6]/60"
+            >
               <Image
-                src={product.images[activeImageIndex]}
+                src={product.images[activeImageIndex] || product.images[0]}
                 alt={product.name}
                 fill
                 priority
                 sizes="(max-width: 1024px) 100vw, 55vw"
-                className="object-cover object-top transition-transform duration-500 hover:scale-105"
+                className={`object-cover object-top transition-transform duration-150 ease-out ${
+                  isHoverZooming ? "scale-225" : "scale-100 group-hover:scale-102"
+                }`}
+                style={
+                  isHoverZooming
+                    ? { transformOrigin: `${mousePos.x}% ${mousePos.y}%` }
+                    : undefined
+                }
+                unoptimized
               />
+
               {product.badge && (
-                <span className="absolute top-4 left-4 z-10 px-2.5 py-1 text-[10px] uppercase font-sans tracking-[0.2em] bg-[#151007] text-[#FAF7F2] font-medium">
+                <span className="absolute top-4 left-4 z-10 px-2.5 py-1 text-[10px] uppercase font-sans tracking-[0.2em] bg-[#151007] text-[#FAF7F2] font-medium shadow-sm">
                   {product.badge}
                 </span>
               )}
+
+              {/* Top-Right Expand Icon Button */}
+              <button
+                type="button"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  setIsLightboxOpen(true);
+                }}
+                className="absolute top-4 right-4 z-10 p-2 bg-[#FAF7F2]/90 hover:bg-[#151007] hover:text-[#FAF7F2] text-[#151007] rounded-none border border-[#D8C9B6] backdrop-blur-sm transition-colors cursor-pointer shadow-sm"
+                title="Click to Zoom Fullscreen"
+              >
+                <Maximize2 size={15} />
+              </button>
+
+              {/* Bottom Interactive Hover & Zoom Pill */}
+              <div className="absolute inset-x-3 bottom-3 z-10 flex items-center justify-between pointer-events-none">
+                <span className="bg-[#151007]/80 backdrop-blur-md text-[#FAF7F2] text-[10px] font-sans px-2.5 py-1 flex items-center gap-1.5 opacity-90 group-hover:opacity-100 transition-opacity">
+                  <ZoomIn size={12} className="text-[#D8C9B6]" />
+                  <span>Hover to zoom • Click to expand ({activeImageIndex + 1}/{product.images.length})</span>
+                </span>
+              </div>
             </div>
           </div>
 
@@ -264,6 +391,24 @@ export default function ProductDetailPage({ params }: ProductPageProps) {
                 {product.name}
               </h1>
 
+              {/* Star Rating Badge linking to Reviews */}
+              <div className="flex items-center gap-2 mt-2">
+                <a
+                  href="#reviews"
+                  className="flex items-center gap-1.5 text-xs font-sans text-[#907553] hover:text-[#151007] transition-colors cursor-pointer group"
+                >
+                  <div className="flex text-[#907553]">
+                    {Array.from({ length: 5 }).map((_, i) => (
+                      <Star key={i} size={13} className="fill-[#907553]" />
+                    ))}
+                  </div>
+                  <span className="font-semibold text-[#151007]">4.9</span>
+                  <span className="text-[#3A2E21]/60 underline underline-offset-2 group-hover:text-[#907553]">
+                    (Client Reflections)
+                  </span>
+                </a>
+              </div>
+
               {/* Price */}
               <div className="flex items-center gap-3 mt-3">
                 <span className="text-xl sm:text-2xl font-sans font-medium text-[#151007]">
@@ -277,34 +422,6 @@ export default function ProductDetailPage({ params }: ProductPageProps) {
                 <span className="text-[11px] font-sans px-2 py-0.5 bg-[#F2EAE0] text-[#907553] font-medium border border-[#D8C9B6]">
                   Inclusive of all taxes
                 </span>
-              </div>
-            </div>
-
-            {/* Color Selection */}
-            <div className="space-y-2 pt-2 border-t border-[#D8C9B6]/50">
-              <div className="flex items-center justify-between">
-                <span className="text-xs font-sans uppercase tracking-[0.16em] text-[#151007] font-medium">
-                  Color: <span className="text-[#907553]">{selectedColor}</span>
-                </span>
-              </div>
-              <div className="flex items-center gap-2">
-                {product.colors.map((c) => (
-                  <button
-                    key={c.name}
-                    onClick={() => setSelectedColor(c.name)}
-                    className={`w-7 h-7 rounded-full p-[2px] transition-all cursor-pointer ${
-                      selectedColor === c.name
-                        ? "ring-2 ring-[#151007] scale-110"
-                        : "hover:scale-105"
-                    }`}
-                    title={c.name}
-                  >
-                    <span
-                      className="block w-full h-full rounded-full border border-black/15"
-                      style={{ backgroundColor: c.hex }}
-                    />
-                  </button>
-                ))}
               </div>
             </div>
 
@@ -633,11 +750,11 @@ export default function ProductDetailPage({ params }: ProductPageProps) {
               </div>
 
               {/* Purchase Buttons */}
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-2">
+              <div className="grid grid-cols-1 sm:grid-cols-12 gap-3 pt-2">
                 <button
                   type="button"
                   onClick={handleAddToBag}
-                  className="w-full py-3.5 px-6 bg-[#151007] text-[#FAF7F2] hover:bg-[#3A2E21] text-xs font-sans font-medium uppercase tracking-[0.2em] transition-all duration-200 cursor-pointer flex items-center justify-center gap-2"
+                  className="sm:col-span-5 py-3.5 px-5 bg-[#151007] text-[#FAF7F2] hover:text-[#FAF7F2] hover:bg-[#3A2E21] text-xs font-sans font-medium uppercase tracking-[0.2em] transition-all duration-200 cursor-pointer flex items-center justify-center gap-2"
                 >
                   <ShoppingBag size={15} />
                   <span>ADD TO BAG</span>
@@ -646,10 +763,18 @@ export default function ProductDetailPage({ params }: ProductPageProps) {
                 <button
                   type="button"
                   onClick={handleBuyNow}
-                  className="w-full py-3.5 px-6 bg-[#907553] text-[#FAF7F2] hover:bg-[#7D6444] text-xs font-sans font-medium uppercase tracking-[0.2em] transition-all duration-200 cursor-pointer flex items-center justify-center gap-2"
+                  className="sm:col-span-5 py-3.5 px-5 bg-[#907553] text-[#FAF7F2] hover:text-[#FAF7F2] hover:bg-[#7D6444] text-xs font-sans font-medium uppercase tracking-[0.2em] transition-all duration-200 cursor-pointer flex items-center justify-center gap-2"
                 >
                   <span>BUY NOW</span>
                 </button>
+
+                <div className="sm:col-span-2 flex items-center justify-center">
+                  <WishlistButton
+                    product={product}
+                    size={17}
+                    className="!w-full !h-full py-3.5 border border-[#D8C9B6] rounded-none hover:border-[#907553]"
+                  />
+                </div>
               </div>
 
               {/* Added to Bag confirmation banner */}
@@ -672,19 +797,39 @@ export default function ProductDetailPage({ params }: ProductPageProps) {
             </div>
 
             {/* Service & Delivery Notes */}
-            <div className="border-t border-[#D8C9B6]/60 pt-4 space-y-2.5 text-xs font-sans text-[#3A2E21]/80">
-              <div className="flex items-center gap-2.5">
-                <Truck size={16} className="text-[#907553]" />
-                <span>Free express delivery across Pakistan on orders above PKR 5,000</span>
+            <div className="border-t border-[#D8C9B6]/60 pt-4 space-y-3 text-xs font-sans text-[#3A2E21]/80">
+              <div className="space-y-1">
+                <div className="flex items-center gap-2 text-[#151007]">
+                  <Truck size={16} className="text-[#907553] shrink-0" />
+                  <span className="font-semibold uppercase tracking-wider text-[11px]">
+                    Delivery &amp; Handcrafting Timeline (20-30 Working Days)
+                  </span>
+                </div>
+                <p className="text-[11.5px] leading-relaxed text-[#3A2E21] pl-6 font-light">
+                  Each Piece is meticulously hand made to fit your need of excellence. These are designed to be timeless, not only for a specific event. That craftsmanship takes time and responsibility. We aim to fulfill all orders within <strong>20-30 working days</strong>.
+                </p>
+                <p className="text-[11px] leading-relaxed text-[#665a4a] pl-6 italic">
+                  Our Artisans only work Monday to Friday. Orders placed on Friday begin processing the following Monday. During peak periods and nationwide uncertainties, timelines may be slightly longer.
+                </p>
               </div>
-              <div className="flex items-center gap-2.5">
-                <RotateCcw size={16} className="text-[#907553]" />
-                <span>Hassle-free 14-day exchange policy for size adjustments</span>
+
+              <div className="pt-2 border-t border-[#D8C9B6]/40 flex items-center gap-2.5">
+                <ShieldCheck size={16} className="text-[#907553] shrink-0" />
+                <span><strong>Cash on Delivery:</strong> Available across Pakistan (Fixed Rs. 350 shipping)</span>
               </div>
-              <div className="flex items-center gap-2.5">
-                <ShieldCheck size={16} className="text-[#907553]" />
-                <span>100% authentic pure fabric &amp; handloom assurance</span>
+
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-2.5">
+                  <RotateCcw size={16} className="text-[#907553] shrink-0" />
+                  <span><strong>Exchange &amp; Return:</strong> Within 72 hours of delivery</span>
+                </div>
+                <ReturnExchangeModal />
               </div>
+            </div>
+
+            {/* Atelier 100% Original Fabric Guarantee Badge */}
+            <div className="pt-2">
+              <FabricGuaranteeBadge variant="full" />
             </div>
 
             {/* Product Details & Fabric Specs */}
@@ -693,35 +838,44 @@ export default function ProductDetailPage({ params }: ProductPageProps) {
                 <h3 className="text-xs font-sans font-medium uppercase tracking-[0.18em] text-[#151007] mb-2">
                   Fabric &amp; Craftsmanship
                 </h3>
-                <p className="text-xs font-sans font-light leading-relaxed text-[#3A2E21]">
-                  {product.description}
-                </p>
-                <p className="text-xs font-sans font-medium text-[#907553] mt-2">
-                  Fabric Composition: {product.fabric}
-                </p>
+                {product.description && (
+                  <p className="text-xs font-sans font-light leading-relaxed text-[#3A2E21]">
+                    {product.description}
+                  </p>
+                )}
+                {product.fabric && (
+                  <p className="text-xs font-sans font-medium text-[#907553] mt-2">
+                    Fabric Composition: {product.fabric}
+                  </p>
+                )}
               </div>
 
-              <div>
-                <h4 className="text-[11px] font-sans font-medium uppercase tracking-[0.16em] text-[#151007] mb-1.5">
-                  Package Details:
-                </h4>
-                <ul className="list-disc list-inside text-xs font-sans space-y-1 text-[#3A2E21]/80">
-                  {product.details.map((d, i) => (
-                    <li key={i}>{d}</li>
-                  ))}
-                </ul>
-              </div>
+              {product.details && product.details.length > 0 && (
+                <div>
+                  <h4 className="text-[11px] font-sans font-medium uppercase tracking-[0.16em] text-[#151007] mb-1.5">
+                    Package Details:
+                  </h4>
+                  <ul className="list-disc list-inside text-xs font-sans space-y-1 text-[#3A2E21]/80">
+                    {product.details.map((d, i) => (
+                      <li key={i}>{d}</li>
+                    ))}
+                  </ul>
+                </div>
+              )}
             </div>
           </div>
         </div>
 
-        {/* RELATED PRODUCTS */}
+        {/* CUSTOMER REVIEWS & STAR RATINGS */}
+        <ProductReviews productId={product.id} productName={product.name} />
+
+        {/* RELATED PRODUCTS ("Complete The Look" / "You May Also Like") */}
         {relatedProducts.length > 0 && (
           <section className="mt-20 pt-12 border-t border-[#D8C9B6]">
             <div className="flex items-center justify-between mb-8">
               <div>
-                <p className="text-[11px] uppercase tracking-[0.2em] font-sans text-[#907553]">
-                  COMPLEMENTARY EDITS
+                <p className="text-[11px] uppercase tracking-[0.2em] font-sans text-[#907553] font-semibold">
+                  COMPLETE THE LOOK • COMPLEMENTARY EDITS
                 </p>
                 <h2
                   className="text-2xl sm:text-3xl text-[#151007] font-normal"
@@ -745,6 +899,9 @@ export default function ProductDetailPage({ params }: ProductPageProps) {
             </div>
           </section>
         )}
+
+        {/* RECENTLY VIEWED PRODUCTS CAROUSEL */}
+        <RecentlyViewed currentProductId={product.id} />
       </main>
 
       {/* SIZE & AGE GUIDE MODAL WITH TABS */}
@@ -955,6 +1112,172 @@ export default function ProductDetailPage({ params }: ProductPageProps) {
                 Got It
               </button>
             </div>
+          </div>
+        </div>
+      )}
+
+      {/* FULLSCREEN LIGHTBOX ZOOM MODAL */}
+      {isLightboxOpen && (
+        <div
+          role="dialog"
+          aria-modal="true"
+          className="fixed inset-0 z-50 bg-black/95 backdrop-blur-md flex flex-col justify-between p-4 sm:p-6 animate-fadeIn select-none"
+        >
+          {/* Lightbox Header */}
+          <div className="flex items-center justify-between text-white border-b border-white/10 pb-3">
+            <div>
+              <p className="text-[10px] uppercase font-sans tracking-[0.2em] text-[#D8C9B6]">
+                HIGH-RESOLUTION ZOOM VIEW
+              </p>
+              <h4
+                className="text-lg sm:text-xl font-serif text-[#FAF7F2]"
+                style={{ fontFamily: "var(--font-cormorant), Georgia, serif" }}
+              >
+                {product.name}
+              </h4>
+              <p className="text-xs text-white/60 font-sans">
+                Photograph {activeImageIndex + 1} of {product.images.length}
+              </p>
+            </div>
+
+            <div className="flex items-center gap-3">
+              {/* Zoom Level Switcher */}
+              <div className="flex items-center bg-white/10 rounded-none border border-white/20 overflow-hidden text-xs font-sans">
+                <button
+                  type="button"
+                  onClick={() => setLightboxZoom(1)}
+                  className={`px-3 py-1.5 transition-colors cursor-pointer ${
+                    lightboxZoom === 1
+                      ? "bg-[#907553] text-[#FAF7F2] font-semibold"
+                      : "text-white/70 hover:bg-white/10"
+                  }`}
+                >
+                  1x
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setLightboxZoom(2)}
+                  className={`px-3 py-1.5 transition-colors cursor-pointer ${
+                    lightboxZoom === 2
+                      ? "bg-[#907553] text-[#FAF7F2] font-semibold"
+                      : "text-white/70 hover:bg-white/10"
+                  }`}
+                >
+                  2x Zoom
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setLightboxZoom(3)}
+                  className={`px-3 py-1.5 transition-colors cursor-pointer ${
+                    lightboxZoom === 3
+                      ? "bg-[#907553] text-[#FAF7F2] font-semibold"
+                      : "text-white/70 hover:bg-white/10"
+                  }`}
+                >
+                  3x Ultra
+                </button>
+              </div>
+
+              {/* Close Button */}
+              <button
+                type="button"
+                onClick={() => {
+                  setIsLightboxOpen(false);
+                  setLightboxZoom(1);
+                }}
+                className="p-2 bg-white/10 hover:bg-white/20 text-white rounded-none border border-white/20 transition-colors cursor-pointer"
+                title="Close Zoom View (Esc)"
+              >
+                <X size={20} />
+              </button>
+            </div>
+          </div>
+
+          {/* Lightbox Center Image & Navigation */}
+          <div className="relative flex-1 flex items-center justify-center overflow-auto p-4 my-2">
+            {/* Prev Image Button */}
+            {product.images.length > 1 && (
+              <button
+                type="button"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  setActiveImageIndex((prev) =>
+                    prev > 0 ? prev - 1 : product.images.length - 1
+                  );
+                }}
+                className="absolute left-2 sm:left-6 z-20 p-3 bg-black/60 hover:bg-[#907553] text-white rounded-full transition-colors cursor-pointer border border-white/20 shadow-lg"
+                title="Previous Photograph"
+              >
+                <ChevronLeft size={22} />
+              </button>
+            )}
+
+            {/* Interactive Zoomable Image */}
+            <div
+              onClick={() =>
+                setLightboxZoom((prev) => (prev === 1 ? 2 : prev === 2 ? 3 : 1))
+              }
+              className="relative max-w-full max-h-full transition-transform duration-300 ease-out"
+              style={{
+                transform: `scale(${lightboxZoom})`,
+                cursor: lightboxZoom > 1 ? "grab" : "zoom-in",
+              }}
+              title="Click photo to cycle 1x ➔ 2x ➔ 3x zoom"
+            >
+              <Image
+                src={product.images[activeImageIndex] || product.images[0]}
+                alt={product.name}
+                width={1200}
+                height={1600}
+                className="max-h-[72vh] w-auto object-contain shadow-2xl select-none"
+                unoptimized
+                priority
+              />
+            </div>
+
+            {/* Next Image Button */}
+            {product.images.length > 1 && (
+              <button
+                type="button"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  setActiveImageIndex((prev) =>
+                    prev < product.images.length - 1 ? prev + 1 : 0
+                  );
+                }}
+                className="absolute right-2 sm:right-6 z-20 p-3 bg-black/60 hover:bg-[#907553] text-white rounded-full transition-colors cursor-pointer border border-white/20 shadow-lg"
+                title="Next Photograph"
+              >
+                <ChevronRight size={22} />
+              </button>
+            )}
+          </div>
+
+          {/* Lightbox Bottom Thumbnails Carousel (Up to 7 images) */}
+          <div className="flex items-center justify-center gap-2 overflow-x-auto py-2 border-t border-white/10">
+            {product.images.map((img, idx) => (
+              <button
+                key={img + idx}
+                type="button"
+                onClick={() => {
+                  setActiveImageIndex(idx);
+                  setLightboxZoom(1);
+                }}
+                className={`relative w-12 h-16 sm:w-14 sm:h-18 rounded-none overflow-hidden transition-all cursor-pointer border ${
+                  activeImageIndex === idx
+                    ? "border-[#907553] ring-2 ring-[#907553] scale-105 opacity-100"
+                    : "border-white/20 opacity-40 hover:opacity-100"
+                }`}
+              >
+                <Image
+                  src={img}
+                  alt={`Thumbnail ${idx + 1}`}
+                  fill
+                  className="object-cover"
+                  unoptimized
+                />
+              </button>
+            ))}
           </div>
         </div>
       )}

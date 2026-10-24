@@ -1,19 +1,20 @@
 "use client";
 
-import React, { useState, useMemo, Suspense } from "react";
+import React, { useState, useEffect, useMemo, Suspense } from "react";
 import { useSearchParams } from "next/navigation";
 import Link from "next/link";
 import { Header } from "@/components/layout/Header";
 import { AnnouncementBar } from "@/components/layout/AnnouncementBar";
 import { Footer } from "@/components/layout/Footer";
 import { ProductCard } from "@/components/product/ProductCard";
+import { fetchCustomerProducts } from "@/services/catalogService";
 import {
-  allProducts,
+  Product,
   ProductCategory,
   standardWomenSizes,
   standardGirlsSizes,
 } from "@/data/products";
-import { ChevronRight, Sparkles, Users } from "lucide-react";
+import { ChevronRight, Sparkles, Users, PlusCircle } from "lucide-react";
 
 function ProductsContent() {
   const searchParams = useSearchParams();
@@ -24,6 +25,25 @@ function ProductsContent() {
   );
   const [selectedSizeFilter, setSelectedSizeFilter] = useState<string>("all");
   const [sortBy, setSortBy] = useState<string>("featured");
+
+  const [products, setProducts] = useState<Product[]>([]);
+  const [isLoading, setIsLoading] = useState<boolean>(true);
+
+  useEffect(() => {
+    let isMounted = true;
+    async function loadCatalog() {
+      setIsLoading(true);
+      const items = await fetchCustomerProducts();
+      if (isMounted) {
+        setProducts(items);
+        setIsLoading(false);
+      }
+    }
+    loadCatalog();
+    return () => {
+      isMounted = false;
+    };
+  }, []);
 
   const categories = [
     { id: "all", label: "ALL PRODUCTS" },
@@ -79,7 +99,7 @@ function ProductsContent() {
   }, [activeCategory]);
 
   const filteredProducts = useMemo(() => {
-    let list = [...allProducts];
+    let list = [...products];
 
     // Filter by category
     if (activeCategory !== "all") {
@@ -107,7 +127,7 @@ function ProductsContent() {
     }
 
     return list;
-  }, [activeCategory, selectedSizeFilter, sortBy]);
+  }, [products, activeCategory, selectedSizeFilter, sortBy]);
 
   return (
     <div className="min-h-screen flex flex-col bg-[#FAF7F2] text-[#211A12]">
@@ -248,8 +268,47 @@ function ProductsContent() {
           </div>
         </div>
 
-        {/* Products Grid */}
-        {filteredProducts.length === 0 ? (
+        {/* Products Grid / Empty State */}
+        {isLoading ? (
+          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-3.5 sm:gap-6 py-8">
+            {Array.from({ length: 5 }).map((_, i) => (
+              <div key={i} className="animate-pulse space-y-3">
+                <div className="aspect-[4/5] bg-[#E8DEC8]/60 w-full" />
+                <div className="h-4 bg-[#E8DEC8]/60 w-3/4" />
+                <div className="h-3 bg-[#E8DEC8]/40 w-1/2" />
+              </div>
+            ))}
+          </div>
+        ) : products.length === 0 ? (
+          <div className="py-24 text-center max-w-xl mx-auto px-4 space-y-6 bg-[#F7F1E8]/70 border border-[#D8C9B6] my-8">
+            <div className="w-16 h-16 mx-auto rounded-full bg-[#FAF7F2] border border-[#907553] flex items-center justify-center text-[#907553]">
+              <Sparkles size={28} />
+            </div>
+            <div className="space-y-2">
+              <p className="text-[11px] uppercase tracking-[0.25em] text-[#907553] font-semibold">
+                CURATING NEW ATELIER COLLECTIONS
+              </p>
+              <h2
+                className="text-2xl sm:text-3xl text-[#151007] font-normal"
+                style={{ fontFamily: "var(--font-cormorant), Georgia, serif" }}
+              >
+                No Products Published Yet
+              </h2>
+              <p className="text-xs sm:text-sm font-sans text-[#3A2E21]/80 max-w-md mx-auto leading-relaxed">
+                All mock listings have been removed from the client catalog. Products added and published from the Admin Portal will be displayed here live.
+              </p>
+            </div>
+            <div className="pt-2">
+              <Link
+                href="/admin/products?action=add"
+                className="inline-flex items-center gap-2 px-6 py-3 bg-[#151007] text-[#FAF7F2] text-xs uppercase tracking-widest font-sans font-medium hover:bg-[#907553] transition-colors shadow-sm"
+              >
+                <PlusCircle size={14} />
+                <span>Add First Product in Admin</span>
+              </Link>
+            </div>
+          </div>
+        ) : filteredProducts.length === 0 ? (
           <div className="py-20 text-center space-y-4">
             <p className="text-lg font-serif text-[#151007]">
               No products found matching the selected filter.
