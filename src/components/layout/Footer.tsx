@@ -169,7 +169,7 @@ export const Footer: React.FC = () => {
             </h4>
             <div className="flex items-center gap-3 text-[#151007]">
               <a
-                href="https://instagram.com"
+                href="https://www.instagram.com/aoujofficial/"
                 target="_blank"
                 rel="noopener noreferrer"
                 aria-label="Follow AOUJ on Instagram"
@@ -178,7 +178,7 @@ export const Footer: React.FC = () => {
                 <InstagramIcon size={14} />
               </a>
               <a
-                href="https://facebook.com"
+                href="https://www.facebook.com/profile.php?id=61595821802707"
                 target="_blank"
                 rel="noopener noreferrer"
                 aria-label="Follow AOUJ on Facebook"
@@ -187,22 +187,13 @@ export const Footer: React.FC = () => {
                 <FacebookIcon size={14} />
               </a>
               <a
-                href="https://tiktok.com"
+                href="https://www.tiktok.com/@aoujofficial"
                 target="_blank"
                 rel="noopener noreferrer"
                 aria-label="Follow AOUJ on TikTok"
                 className="w-8 h-8 rounded-full border border-[#D8C9B6] flex items-center justify-center hover:border-[#907553] hover:text-[#907553] transition-colors"
               >
                 <TikTokIcon size={13} />
-              </a>
-              <a
-                href="https://youtube.com"
-                target="_blank"
-                rel="noopener noreferrer"
-                aria-label="Follow AOUJ on YouTube"
-                className="w-8 h-8 rounded-full border border-[#D8C9B6] flex items-center justify-center hover:border-[#907553] hover:text-[#907553] transition-colors"
-              >
-                <YoutubeIcon size={14} />
               </a>
             </div>
           </div>

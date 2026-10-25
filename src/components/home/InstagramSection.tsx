@@ -16,7 +16,7 @@ export const InstagramSection: React.FC = () => {
           title="On Instagram"
           subtitle="Follow us for daily inspiration."
           actionText="FOLLOW ON INSTAGRAM"
-          actionHref="https://instagram.com"
+          actionHref="https://www.instagram.com/aoujofficial/"
         />
 
         {/* 6 Tiles: 3 cols on mobile, 6 cols on desktop */}
@@ -24,7 +24,7 @@ export const InstagramSection: React.FC = () => {
           {instagramData.map((post) => (
             <a
               key={post.id}
-              href="https://instagram.com"
+              href="https://www.instagram.com/aoujofficial/"
               target="_blank"
               rel="noopener noreferrer"
               aria-label={`View Instagram post: ${post.alt}`}
