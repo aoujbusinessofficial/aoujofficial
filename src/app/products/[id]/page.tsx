@@ -15,6 +15,7 @@ import { RecentlyViewed, recordProductView } from "@/components/product/Recently
 import { FabricGuaranteeBadge } from "@/components/ui/FabricGuaranteeBadge";
 import { ReturnExchangeModal } from "@/components/ui/ReturnExchangeModal";
 import { fetchProductByIdOrSlug, fetchCustomerProducts } from "@/services/catalogService";
+import { getProductSchema } from "@/lib/seo/structuredData";
 import {
   allProducts,
   Product,
@@ -266,6 +267,14 @@ export default function ProductDetailPage({ params }: ProductPageProps) {
 
   return (
     <div className="min-h-screen flex flex-col bg-[#FAF7F2] text-[#211A12]">
+      {/* Product JSON-LD Structured Data for Google Rich Snippets */}
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{
+          __html: JSON.stringify(getProductSchema(product)),
+        }}
+      />
+
       <AnnouncementBar />
       <Header />
 

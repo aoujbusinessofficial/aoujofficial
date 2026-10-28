@@ -17,9 +17,77 @@ const manrope = Manrope({
 });
 
 export const metadata: Metadata = {
-  title: "AOUJ | Rise In Your Own Way | Luxury Pakistani Fashion",
+  metadataBase: new URL("https://www.aoujofficial.com"),
+  title: {
+    default: "AOUJ | Luxury Pakistani Fashion, Embroidered Pret & Couture",
+    template: "%s | AOUJ Atelier Official",
+  },
   description:
-    "Discover AOUJ - Timeless luxury, embroidered pret, festive collections, and children's couture crafted with poetic elegance.",
+    "Explore AOUJ - Premier Pakistani luxury clothing house. Designer embroidered pret, handcrafted festive suits, pure lawn co-ords, and mother-daughter matching couture with nationwide express delivery.",
+  keywords: [
+    "AOUJ",
+    "AOUJ Atelier",
+    "Pakistani luxury pret",
+    "women clothing Pakistan",
+    "designer lawn suits",
+    "embroidered pret wear",
+    "handcrafted zardozi formal suits",
+    "mother daughter matching dresses",
+    "girls festive couture",
+    "Pakistani dresses online",
+    "luxury eastern wear",
+    "couture Gujrat",
+    "ready to wear suits Pakistan",
+  ],
+  authors: [{ name: "AOUJ Atelier", url: "https://www.aoujofficial.com" }],
+  creator: "AOUJ Atelier",
+  publisher: "AOUJ Haute Couture",
+  formatDetection: {
+    email: true,
+    address: true,
+    telephone: true,
+  },
+  alternates: {
+    canonical: "https://www.aoujofficial.com",
+  },
+  openGraph: {
+    type: "website",
+    locale: "en_PK",
+    url: "https://www.aoujofficial.com",
+    siteName: "AOUJ Atelier Official",
+    title: "AOUJ | Luxury Pakistani Fashion & Heirloom Pret",
+    description:
+      "Timeless Pakistani luxury pret, artisanal embroidered lawn, and bespoke festive couture handcrafted for elegance.",
+    images: [
+      {
+        url: "https://images.unsplash.com/photo-1583391733956-3750e0ff4e8b?q=80&w=1200&auto=format&fit=crop",
+        width: 1200,
+        height: 630,
+        alt: "AOUJ Luxury Pakistani Couture Collection",
+      },
+    ],
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: "AOUJ | Luxury Pakistani Fashion & Pret",
+    description:
+      "Handcrafted Pakistani pret, embroidered lawn, and bespoke festive wear delivered across Pakistan.",
+    images: [
+      "https://images.unsplash.com/photo-1583391733956-3750e0ff4e8b?q=80&w=1200&auto=format&fit=crop",
+    ],
+    creator: "@aoujofficial",
+  },
+  robots: {
+    index: true,
+    follow: true,
+    googleBot: {
+      index: true,
+      follow: true,
+      "max-video-preview": -1,
+      "max-image-preview": "large",
+      "max-snippet": -1,
+    },
+  },
   icons: {
     icon: [
       { url: "/favicon.ico", sizes: "any" },
@@ -28,22 +96,13 @@ export const metadata: Metadata = {
     apple: "/images/aouj-icon-512.png",
     shortcut: "/favicon.ico",
   },
-  keywords: [
-    "AOUJ",
-    "Pakistani fashion",
-    "Luxury Pret",
-    "Lawn",
-    "Embroidered Suit",
-    "Women Fashion",
-    "Kids Fashion",
-    "Eastern Wear",
-  ],
 };
 
 import { CartProvider } from "@/context/CartContext";
 import { AuthProvider } from "@/context/AuthContext";
 import { WishlistProvider } from "@/context/WishlistContext";
 import { FloatingWhatsAppWidget } from "@/components/ui/FloatingWhatsAppWidget";
+import { getOrganizationSchema, getWebSiteSchema } from "@/lib/seo/structuredData";
 
 export default function RootLayout({
   children,
@@ -58,6 +117,20 @@ export default function RootLayout({
       className={`${cormorant.variable} ${manrope.variable} antialiased`}
     >
       <head>
+        {/* Global SEO Structured Data (JSON-LD) for Google Knowledge Graph & Rich Snippets */}
+        <script
+          type="application/ld+json"
+          dangerouslySetInnerHTML={{
+            __html: JSON.stringify(getOrganizationSchema()),
+          }}
+        />
+        <script
+          type="application/ld+json"
+          dangerouslySetInnerHTML={{
+            __html: JSON.stringify(getWebSiteSchema()),
+          }}
+        />
+
         {/* Protection against browser extensions (Urban VPN, Bitwarden, etc.) injecting bis_skin_checked attributes */}
         <script
           dangerouslySetInnerHTML={{
