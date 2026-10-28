@@ -3,8 +3,6 @@ import { Header } from "@/components/layout/Header";
 import { Hero } from "@/components/home/Hero";
 import { CategorySection } from "@/components/home/CategorySection";
 import { ProductSection } from "@/components/home/ProductSection";
-import { EditorialBanner } from "@/components/home/EditorialBanner";
-import { CollectionSplit } from "@/components/home/CollectionSplit";
 import { Benefits } from "@/components/home/Benefits";
 import { InstagramSection } from "@/components/home/InstagramSection";
 import { Newsletter } from "@/components/home/Newsletter";
@@ -17,10 +15,8 @@ export const revalidate = 0;
 export default async function Home() {
   const products = await fetchCustomerProducts();
   const newArrivals = products.filter((p) => p.badge === "NEW");
-  const bestSellers = products.filter((p) => p.badge === "BEST SELLER");
 
-  const displayNew = newArrivals.length > 0 ? newArrivals : products.slice(0, 4);
-  const displayBest = bestSellers.length > 0 ? bestSellers : products.slice(4, 8);
+  const displayNew = newArrivals.length > 0 ? newArrivals : products.slice(0, 8);
 
   return (
     <div className="min-h-screen flex flex-col bg-[#FAF7F2] text-[#211A12]">
@@ -28,13 +24,13 @@ export default async function Home() {
       <Header />
 
       <main className="flex-1 w-full">
-        {/* 3. Hero Section */}
+        {/* 1. Hero Section */}
         <Hero />
 
-        {/* 4. Shop By Category (Women, Girls, Family) */}
+        {/* 2. Shop By Category (Women, Girls, Family) */}
         <CategorySection />
 
-        {/* 5. New Arrivals (Only from database) */}
+        {/* 3. New Arrivals (Only from database) */}
         {displayNew.length > 0 ? (
           <ProductSection
             id="new-arrivals"
@@ -73,36 +69,17 @@ export default async function Home() {
           </section>
         )}
 
-        {/* 6. Editorial Campaign / The Everyday Edit */}
-        <EditorialBanner />
-
-        {/* 7. Best Sellers (Only from database) */}
-        {displayBest.length > 0 && (
-          <ProductSection
-            id="best-sellers"
-            title="BEST SELLERS"
-            subtitle="Loved by many, for a reason."
-            actionText="VIEW ALL"
-            actionHref="/products"
-            viewAllHref="/products"
-            products={displayBest}
-          />
-        )}
-
-        {/* 8. Women's + Girls & Family Collection */}
-        <CollectionSplit />
-
-        {/* 9. Service Benefits */}
+        {/* 4. Service Benefits */}
         <Benefits />
 
-        {/* 10. Instagram / Social Section */}
+        {/* 5. Instagram / Social Section */}
         <InstagramSection />
 
-        {/* 11. Newsletter / Community Section */}
+        {/* 6. Newsletter / Community Section */}
         <Newsletter />
       </main>
 
-      {/* 12. Footer */}
+      {/* Footer */}
       <Footer />
     </div>
   );

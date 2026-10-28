@@ -5,9 +5,8 @@ import Link from "next/link";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
 import { Search, Heart, User, ShoppingBag, Menu, X, ArrowRight, Sparkles } from "lucide-react";
-import { navigationData, NavItem } from "@/data/navigation";
+import { navigationData } from "@/data/navigation";
 import { Logo } from "@/components/ui/Logo";
-import { MegaMenu } from "./MegaMenu";
 import { MobileDrawer } from "./MobileDrawer";
 import { useCart } from "@/context/CartContext";
 import { useAuth } from "@/context/AuthContext";
@@ -20,8 +19,6 @@ export const Header: React.FC = () => {
   const { totalWishlistCount } = useWishlist();
   const { user, isAuthenticated } = useAuth();
   const router = useRouter();
-  const [activeItem, setActiveItem] = useState<NavItem | null>(null);
-  const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [isMobileDrawerOpen, setIsMobileDrawerOpen] = useState(false);
   const [isScrolled, setIsScrolled] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
@@ -85,21 +82,6 @@ export const Header: React.FC = () => {
     }
   };
 
-  const handleNavMouseEnter = (item: NavItem) => {
-    if (item.hasDropdown && item.megaMenu) {
-      setActiveItem(item);
-      setIsMenuOpen(true);
-    } else {
-      setActiveItem(null);
-      setIsMenuOpen(false);
-    }
-  };
-
-  const handleNavMouseLeave = () => {
-    setIsMenuOpen(false);
-    setActiveItem(null);
-  };
-
   return (
     <header
       className={`sticky top-0 z-40 bg-[#FAF7F2]/95 backdrop-blur-md border-b border-[#D8C9B6]/60 transition-all duration-300 ${
@@ -120,24 +102,16 @@ export const Header: React.FC = () => {
             </button>
           </div>
 
-          {/* Left Navigation (Desktop) */}
+          {/* Left Navigation (Desktop) - Direct Clean Links */}
           <nav className="hidden lg:flex items-center gap-7 xl:gap-8 flex-1">
             {navigationData.map((item) => (
-              <div
-                key={item.label}
-                onMouseEnter={() => handleNavMouseEnter(item)}
-                className="relative py-2"
-              >
+              <div key={item.label} className="relative py-2">
                 <Link
                   href={item.href}
                   className="text-[12px] xl:text-[13px] font-sans font-medium uppercase tracking-[0.18em] text-[#211A12] hover:text-[#907553] transition-colors duration-200 relative pb-1 group"
                 >
                   {item.label}
-                  <span
-                    className={`absolute bottom-0 left-0 w-0 h-[1.5px] bg-[#907553] transition-all duration-300 group-hover:w-full ${
-                      activeItem?.label === item.label && isMenuOpen ? "w-full" : ""
-                    }`}
-                  />
+                  <span className="absolute bottom-0 left-0 w-0 h-[1.5px] bg-[#907553] transition-all duration-300 group-hover:w-full" />
                 </Link>
               </div>
             ))}
@@ -324,16 +298,6 @@ export const Header: React.FC = () => {
             </Link>
           </div>
         </div>
-      </div>
-
-      {/* Mega Menu Dropdown */}
-      <div onMouseLeave={handleNavMouseLeave}>
-        <MegaMenu
-          item={activeItem}
-          isOpen={isMenuOpen}
-          onMouseEnter={() => setIsMenuOpen(true)}
-          onMouseLeave={handleNavMouseLeave}
-        />
       </div>
 
       {/* Mobile Drawer */}
