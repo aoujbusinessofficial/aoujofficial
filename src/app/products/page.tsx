@@ -230,44 +230,6 @@ function ProductsContent() {
           </div>
         </div>
 
-        {/* Sizing Filter Bar */}
-        <div className="bg-[#F7F1E8] p-4 sm:p-5 border border-[#D8C9B6]/60 mb-8">
-          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 mb-3">
-            <span className="text-xs font-sans font-medium uppercase tracking-[0.16em] text-[#907553] flex items-center gap-1.5">
-              <Sparkles size={14} />
-              {activeCategory === "girls"
-                ? "Filter by Girl's Age / Size (New Born to XL):"
-                : activeCategory === "women"
-                ? "Filter by Woman's Size (Small to XL):"
-                : activeCategory === "family"
-                ? "Filter Family Set by Mother Size:"
-                : "Quick Size Filter:"}
-            </span>
-            <span className="text-[11px] font-sans text-[#3A2E21]/70">
-              Select any size to filter available pieces
-            </span>
-          </div>
-
-          <div className="flex flex-wrap gap-2">
-            {availableFilters.map((size) => {
-              const isSelected = selectedSizeFilter === size;
-              return (
-                <button
-                  key={size}
-                  onClick={() => setSelectedSizeFilter(size)}
-                  className={`px-3 py-1.5 text-xs font-sans rounded-none transition-all duration-200 cursor-pointer ${
-                    isSelected
-                      ? "bg-[#907553] text-[#FAF7F2] border border-[#907553] font-medium"
-                      : "bg-[#FAF7F2] text-[#211A12] border border-[#D8C9B6] hover:border-[#907553]"
-                  }`}
-                >
-                  {size === "all" ? "All Sizes" : size}
-                </button>
-              );
-            })}
-          </div>
-        </div>
-
         {/* Products Grid / Empty State */}
         {isLoading ? (
           <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-3.5 sm:gap-6 py-8">
