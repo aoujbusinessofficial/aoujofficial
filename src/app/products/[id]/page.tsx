@@ -93,9 +93,20 @@ export default function ProductDetailPage({ params }: ProductPageProps) {
           recordProductView(p);
 
           setSelectedColor(p.colors[0]?.name || "Ivory");
-          setSelectedSingleSize(
-            p.sizes[0] || (p.category === "girls" ? "3-4 Years" : "Medium (M)")
-          );
+          
+          const defaultSingleSize =
+            p.category === "girls"
+              ? standardGirlsSizes.find((s) => (p.sizeInventory?.[s] ?? 1) > 0) || "3-4 Years"
+              : standardWomenSizes.find((s) => (p.sizeInventory?.[s] ?? 1) > 0) || "Medium (M)";
+          setSelectedSingleSize(defaultSingleSize);
+
+          const defaultWomanSize =
+            standardWomenSizes.find((s) => (p.sizeInventory?.[s] ?? 1) > 0) || "Medium (M)";
+          setSelectedWomanSize(defaultWomanSize);
+
+          const defaultGirlSize =
+            standardGirlsSizes.find((s) => (p.sizeInventory?.[s] ?? 1) > 0) || "3-4 Years";
+          setSelectedGirlSize(defaultGirlSize);
 
           // Fetch related pieces ("Complete the Look" / "You May Also Like")
           const allItems = await fetchCustomerProducts();
@@ -179,10 +190,30 @@ export default function ProductDetailPage({ params }: ProductPageProps) {
         : `Woman Only: ${selectedWomanSize}`
       : selectedSingleSize;
 
-  const currentPrice =
+  const basePrice =
     product.category === "family" && !includeGirlPiece
       ? Math.round(product.price * 0.65)
       : product.price;
+
+  const hasDiscount = Boolean(product.saleDiscountPercent && product.saleDiscountPercent > 0);
+  const currentPrice = hasDiscount
+    ? Math.round(basePrice * (1 - (product.saleDiscountPercent || 0) / 100))
+    : basePrice;
+
+  // Size inventory stock checker
+  const isSizeOutOfStock = (sz: string) => {
+    if (!product?.sizeInventory) return false;
+    const count = product.sizeInventory[sz];
+    return typeof count === "number" && count <= 0;
+  };
+
+  const isTotalOutOfStock = typeof product.stock === "number" && product.stock <= 0;
+  const isSelectedSizeOutOfStock =
+    product.category === "family"
+      ? isSizeOutOfStock(selectedWomanSize) || (includeGirlPiece && isSizeOutOfStock(selectedGirlSize))
+      : isSizeOutOfStock(selectedSingleSize);
+
+  const isSoldOut = isTotalOutOfStock || isSelectedSizeOutOfStock;
 
   const handleAddToBag = () => {
     addToCart({
@@ -356,11 +387,19 @@ export default function ProductDetailPage({ params }: ProductPageProps) {
                 unoptimized
               />
 
-              {product.badge && (
+              {isTotalOutOfStock ? (
+                <span className="absolute top-4 left-4 z-10 px-2.5 py-1 text-[10px] uppercase font-sans tracking-[0.2em] bg-[#8B1E1E] text-[#FAF7F2] font-bold shadow-sm">
+                  SOLD OUT
+                </span>
+              ) : hasDiscount ? (
+                <span className="absolute top-4 left-4 z-10 px-2.5 py-1 text-[10px] uppercase font-sans tracking-[0.2em] bg-[#907553] text-[#FAF7F2] font-bold shadow-sm">
+                  {product.saleDiscountPercent}% OFF
+                </span>
+              ) : product.badge ? (
                 <span className="absolute top-4 left-4 z-10 px-2.5 py-1 text-[10px] uppercase font-sans tracking-[0.2em] bg-[#151007] text-[#FAF7F2] font-medium shadow-sm">
                   {product.badge}
                 </span>
-              )}
+              ) : null}
 
               {/* Top-Right Expand Icon Button */}
               <button
@@ -419,15 +458,24 @@ export default function ProductDetailPage({ params }: ProductPageProps) {
               </div>
 
               {/* Price */}
-              <div className="flex items-center gap-3 mt-3">
-                <span className="text-xl sm:text-2xl font-sans font-medium text-[#151007]">
+              <div className="flex flex-wrap items-center gap-3 mt-3">
+                <span className="text-xl sm:text-2xl font-sans font-bold text-[#151007]">
                   Rs. {currentPrice.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ",")}
                 </span>
-                {product.originalPrice && (
+                {hasDiscount ? (
+                  <>
+                    <span className="text-sm font-sans text-[#3A2E21]/60 line-through">
+                      Rs. {basePrice.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ",")}
+                    </span>
+                    <span className="text-xs font-sans font-bold px-2 py-0.5 bg-red-100 text-red-800 border border-red-300">
+                      {product.saleDiscountPercent}% OFF
+                    </span>
+                  </>
+                ) : product.originalPrice ? (
                   <span className="text-sm font-sans text-[#3A2E21]/60 line-through">
                     Rs. {product.originalPrice.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ",")}
                   </span>
-                )}
+                ) : null}
                 <span className="text-[11px] font-sans px-2 py-0.5 bg-[#F2EAE0] text-[#907553] font-medium border border-[#D8C9B6]">
                   Inclusive of all taxes
                 </span>
@@ -473,20 +521,30 @@ export default function ProductDetailPage({ params }: ProductPageProps) {
                     {standardWomenSizes.map((sz) => {
                       const isSelected = selectedWomanSize === sz;
                       const isCustom = sz.toLowerCase().includes("custom");
+                      const isOos = isSizeOutOfStock(sz);
+
                       return (
                         <button
                           key={sz}
                           type="button"
-                          onClick={() => setSelectedWomanSize(sz)}
-                          className={`py-2 px-2.5 text-xs font-sans text-center transition-all border cursor-pointer ${
-                            isSelected
-                              ? "bg-[#151007] text-[#FAF7F2] border-[#151007] font-medium"
+                          disabled={isOos}
+                          onClick={() => !isOos && setSelectedWomanSize(sz)}
+                          className={`py-2 px-2.5 text-xs font-sans text-center transition-all border ${
+                            isOos
+                              ? "bg-[#FAF7F2]/50 text-[#3A2E21]/40 border-dashed border-[#D8C9B6] cursor-not-allowed opacity-60"
+                              : isSelected
+                              ? "bg-[#151007] text-[#FAF7F2] border-[#151007] font-medium cursor-pointer"
                               : isCustom
-                              ? "bg-[#F7F1E8] text-[#907553] border-[#907553]/60 hover:border-[#151007]"
-                              : "bg-[#FAF7F2] text-[#211A12] border-[#D8C9B6] hover:border-[#907553]"
+                              ? "bg-[#F7F1E8] text-[#907553] border-[#907553]/60 hover:border-[#151007] cursor-pointer"
+                              : "bg-[#FAF7F2] text-[#211A12] border-[#D8C9B6] hover:border-[#907553] cursor-pointer"
                           }`}
                         >
-                          {sz}
+                          <span className={isOos ? "line-through" : ""}>{sz}</span>
+                          {isOos && (
+                            <span className="block text-[8px] uppercase tracking-wider text-red-600 font-bold no-underline mt-0.5">
+                              Out of Stock
+                            </span>
+                          )}
                         </button>
                       );
                     })}
@@ -534,20 +592,30 @@ export default function ProductDetailPage({ params }: ProductPageProps) {
                         {standardGirlsSizes.map((sz) => {
                           const isSelected = selectedGirlSize === sz;
                           const isCustom = sz.toLowerCase().includes("custom");
+                          const isOos = isSizeOutOfStock(sz);
+
                           return (
                             <button
                               key={sz}
                               type="button"
-                              onClick={() => setSelectedGirlSize(sz)}
-                              className={`py-2 px-2 text-xs font-sans text-center transition-all border cursor-pointer ${
-                                isSelected
-                                  ? "bg-[#151007] text-[#FAF7F2] border-[#151007] font-medium"
+                              disabled={isOos}
+                              onClick={() => !isOos && setSelectedGirlSize(sz)}
+                              className={`py-2 px-2 text-xs font-sans text-center transition-all border ${
+                                isOos
+                                  ? "bg-[#FAF7F2]/50 text-[#3A2E21]/40 border-dashed border-[#D8C9B6] cursor-not-allowed opacity-60"
+                                  : isSelected
+                                  ? "bg-[#151007] text-[#FAF7F2] border-[#151007] font-medium cursor-pointer"
                                   : isCustom
-                                  ? "bg-[#F7F1E8] text-[#907553] border-[#907553]/60 hover:border-[#151007]"
-                                  : "bg-[#FAF7F2] text-[#211A12] border-[#D8C9B6] hover:border-[#907553]"
+                                  ? "bg-[#F7F1E8] text-[#907553] border-[#907553]/60 hover:border-[#151007] cursor-pointer"
+                                  : "bg-[#FAF7F2] text-[#211A12] border-[#D8C9B6] hover:border-[#907553] cursor-pointer"
                               }`}
                             >
-                              {sz}
+                              <span className={isOos ? "line-through" : ""}>{sz}</span>
+                              {isOos && (
+                                <span className="block text-[8px] uppercase tracking-wider text-red-600 font-bold no-underline mt-0.5">
+                                  Out of Stock
+                                </span>
+                              )}
                             </button>
                           );
                         })}
@@ -586,21 +654,30 @@ export default function ProductDetailPage({ params }: ProductPageProps) {
                   {standardGirlsSizes.map((sz) => {
                     const isSelected = selectedSingleSize === sz;
                     const isCustom = sz.toLowerCase().includes("custom");
+                    const isOos = isSizeOutOfStock(sz);
 
                     return (
                       <button
                         key={sz}
                         type="button"
-                        onClick={() => setSelectedSingleSize(sz)}
-                        className={`py-2.5 px-2 text-xs font-sans text-center transition-all duration-200 border cursor-pointer ${
-                          isSelected
-                            ? "bg-[#151007] text-[#FAF7F2] border-[#151007] font-medium shadow-sm"
+                        disabled={isOos}
+                        onClick={() => !isOos && setSelectedSingleSize(sz)}
+                        className={`py-2 px-2 text-xs font-sans text-center transition-all duration-200 border ${
+                          isOos
+                            ? "bg-[#FAF7F2]/50 text-[#3A2E21]/40 border-dashed border-[#D8C9B6] cursor-not-allowed opacity-60"
+                            : isSelected
+                            ? "bg-[#151007] text-[#FAF7F2] border-[#151007] font-medium shadow-sm cursor-pointer"
                             : isCustom
-                            ? "bg-[#F7F1E8] text-[#907553] border-[#907553]/60 hover:border-[#151007]"
-                            : "bg-[#FAF7F2] text-[#211A12] border-[#D8C9B6] hover:border-[#907553]"
+                            ? "bg-[#F7F1E8] text-[#907553] border-[#907553]/60 hover:border-[#151007] cursor-pointer"
+                            : "bg-[#FAF7F2] text-[#211A12] border-[#D8C9B6] hover:border-[#907553] cursor-pointer"
                         }`}
                       >
-                        {sz}
+                        <span className={isOos ? "line-through" : ""}>{sz}</span>
+                        {isOos && (
+                          <span className="block text-[8px] uppercase tracking-wider text-red-600 font-bold no-underline mt-0.5">
+                            Out of Stock
+                          </span>
+                        )}
                       </button>
                     );
                   })}
@@ -632,21 +709,30 @@ export default function ProductDetailPage({ params }: ProductPageProps) {
                   {standardWomenSizes.map((sz) => {
                     const isSelected = selectedSingleSize === sz;
                     const isCustom = sz.toLowerCase().includes("custom");
+                    const isOos = isSizeOutOfStock(sz);
 
                     return (
                       <button
                         key={sz}
                         type="button"
-                        onClick={() => setSelectedSingleSize(sz)}
-                        className={`py-2.5 px-3 text-xs font-sans text-center transition-all duration-200 border cursor-pointer ${
-                          isSelected
-                            ? "bg-[#151007] text-[#FAF7F2] border-[#151007] font-medium shadow-sm"
+                        disabled={isOos}
+                        onClick={() => !isOos && setSelectedSingleSize(sz)}
+                        className={`py-2.5 px-3 text-xs font-sans text-center transition-all duration-200 border ${
+                          isOos
+                            ? "bg-[#FAF7F2]/50 text-[#3A2E21]/40 border-dashed border-[#D8C9B6] cursor-not-allowed opacity-60"
+                            : isSelected
+                            ? "bg-[#151007] text-[#FAF7F2] border-[#151007] font-medium shadow-sm cursor-pointer"
                             : isCustom
-                            ? "bg-[#F7F1E8] text-[#907553] border-[#907553]/60 hover:border-[#151007]"
-                            : "bg-[#FAF7F2] text-[#211A12] border-[#D8C9B6] hover:border-[#907553]"
+                            ? "bg-[#F7F1E8] text-[#907553] border-[#907553]/60 hover:border-[#151007] cursor-pointer"
+                            : "bg-[#FAF7F2] text-[#211A12] border-[#D8C9B6] hover:border-[#907553] cursor-pointer"
                         }`}
                       >
-                        {sz}
+                        <span className={isOos ? "line-through" : ""}>{sz}</span>
+                        {isOos && (
+                          <span className="block text-[8px] uppercase tracking-wider text-red-600 font-bold no-underline mt-0.5">
+                            Out of Stock
+                          </span>
+                        )}
                       </button>
                     );
                   })}
@@ -762,19 +848,41 @@ export default function ProductDetailPage({ params }: ProductPageProps) {
               <div className="grid grid-cols-1 sm:grid-cols-12 gap-3 pt-2">
                 <button
                   type="button"
+                  disabled={isSoldOut}
                   onClick={handleAddToBag}
-                  className="sm:col-span-5 py-3.5 px-5 bg-[#151007] text-[#FAF7F2] hover:text-[#FAF7F2] hover:bg-[#3A2E21] text-xs font-sans font-medium uppercase tracking-[0.2em] transition-all duration-200 cursor-pointer flex items-center justify-center gap-2"
+                  className={`sm:col-span-5 py-3.5 px-5 text-xs font-sans font-medium uppercase tracking-[0.2em] transition-all duration-200 flex items-center justify-center gap-2 ${
+                    isSoldOut
+                      ? "bg-[#D8C9B6]/50 text-[#3A2E21]/50 border border-[#D8C9B6] cursor-not-allowed"
+                      : "bg-[#151007] text-[#FAF7F2] hover:text-[#FAF7F2] hover:bg-[#3A2E21] cursor-pointer"
+                  }`}
                 >
                   <ShoppingBag size={15} />
-                  <span>ADD TO BAG</span>
+                  <span>
+                    {isTotalOutOfStock
+                      ? "SOLD OUT"
+                      : isSelectedSizeOutOfStock
+                      ? "SIZE OUT OF STOCK"
+                      : "ADD TO BAG"}
+                  </span>
                 </button>
 
                 <button
                   type="button"
+                  disabled={isSoldOut}
                   onClick={handleBuyNow}
-                  className="sm:col-span-5 py-3.5 px-5 bg-[#907553] text-[#FAF7F2] hover:text-[#FAF7F2] hover:bg-[#7D6444] text-xs font-sans font-medium uppercase tracking-[0.2em] transition-all duration-200 cursor-pointer flex items-center justify-center gap-2"
+                  className={`sm:col-span-5 py-3.5 px-5 text-xs font-sans font-medium uppercase tracking-[0.2em] transition-all duration-200 flex items-center justify-center gap-2 ${
+                    isSoldOut
+                      ? "bg-[#D8C9B6]/30 text-[#3A2E21]/40 border border-[#D8C9B6]/50 cursor-not-allowed"
+                      : "bg-[#907553] text-[#FAF7F2] hover:text-[#FAF7F2] hover:bg-[#7D6444] cursor-pointer"
+                  }`}
                 >
-                  <span>BUY NOW</span>
+                  <span>
+                    {isTotalOutOfStock
+                      ? "OUT OF STOCK"
+                      : isSelectedSizeOutOfStock
+                      ? "UNAVAILABLE"
+                      : "BUY NOW"}
+                  </span>
                 </button>
 
                 <div className="sm:col-span-2 flex items-center justify-center">
@@ -785,6 +893,13 @@ export default function ProductDetailPage({ params }: ProductPageProps) {
                   />
                 </div>
               </div>
+
+              {/* Size Out of Stock Warning */}
+              {isSelectedSizeOutOfStock && !isTotalOutOfStock && (
+                <div className="p-2.5 bg-red-50 border border-red-200 text-red-700 text-xs font-sans flex items-center gap-2">
+                  <span>Selected size is currently <strong>Out of Stock</strong>. Please select another available size or choose <em>Customized Size</em>.</span>
+                </div>
+              )}
 
               {/* Added to Bag confirmation banner */}
               {addedToBag && (

@@ -18,6 +18,8 @@ export interface AdminProductInput {
   isNewArrival?: boolean;
   isBestSeller?: boolean;
   isOnSale?: boolean;
+  saleDiscountPercent?: number;
+  sizeInventory?: Record<string, number>;
   images: string[];
 }
 
@@ -339,6 +341,8 @@ export const fetchAllAdminProducts = async () => {
       colorHex: p.color_hex,
       fabric: p.fabric,
       isOnSale: p.is_on_sale,
+      saleDiscountPercent: p.sale_discount_percent || 0,
+      sizeInventory: p.size_inventory || {},
       isNewArrival: p.is_new_arrival,
       isBestSeller: p.is_best_seller,
       images: (p.product_images || [])
@@ -388,6 +392,8 @@ export const createOrUpdateProduct = async (
       is_new_arrival: Boolean(input.isNewArrival),
       is_best_seller: Boolean(input.isBestSeller),
       is_on_sale: Boolean(input.isOnSale),
+      sale_discount_percent: Number(input.saleDiscountPercent) || 0,
+      size_inventory: input.sizeInventory || {},
     };
 
     let productId = input.id;

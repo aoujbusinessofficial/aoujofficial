@@ -77,7 +77,12 @@ export function mapDbProductToProduct(p: any): Product {
       "Customized Size",
     ],
     fabric: p.fabric || "Pure Lawn & Organza",
-    badge: p.is_on_sale || p.isOnSale
+    stock: typeof p.stock === "number" ? p.stock : 10,
+    sizeInventory: p.size_inventory || p.sizeInventory || {},
+    saleDiscountPercent: p.sale_discount_percent ?? p.saleDiscountPercent ?? 0,
+    badge: (p.sale_discount_percent && p.sale_discount_percent > 0)
+      ? `${p.sale_discount_percent}% OFF`
+      : p.is_on_sale || p.isOnSale
       ? "SALE"
       : p.is_new_arrival || p.isNewArrival
       ? "NEW"

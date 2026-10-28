@@ -58,6 +58,8 @@ export default function AdminProductsPage() {
   const [isNewArrival, setIsNewArrival] = useState(true);
   const [isBestSeller, setIsBestSeller] = useState(false);
   const [isOnSale, setIsOnSale] = useState(false);
+  const [saleDiscountPercent, setSaleDiscountPercent] = useState<number>(0);
+  const [sizeInventory, setSizeInventory] = useState<Record<string, number>>({});
   
   // Image Upload State (Up to 7 images)
   const [images, setImages] = useState<string[]>([]);
@@ -82,6 +84,35 @@ export default function AdminProductsPage() {
     }
   }, [searchParams]);
 
+  const getAvailableSizesForCategory = (cat: string) => {
+    if (cat === "women") {
+      return ["Small (S)", "Medium (M)", "Large (L)", "Extra Large (XL)", "Customized Size"];
+    } else if (cat === "girls") {
+      return [
+        "New Born (0-3 Months)",
+        "3-6 Months",
+        "6-12 Months",
+        "1 Year",
+        "2-3 Years",
+        "3-4 Years",
+        "4-5 Years",
+        "5-6 Years",
+        "7-8 Years",
+        "9-10 Years",
+        "11-12 Years",
+        "Extra Large (Teen XL)",
+        "Customized Size",
+      ];
+    } else {
+      return [
+        "Mother Small + Daughter 2-3Y",
+        "Mother Medium + Daughter 4-5Y",
+        "Mother Large + Daughter 7-8Y",
+        "Customized Family Sizing",
+      ];
+    }
+  };
+
   const resetForm = () => {
     setSku("");
     setSlug("");
@@ -96,6 +127,14 @@ export default function AdminProductsPage() {
     setIsNewArrival(true);
     setIsBestSeller(false);
     setIsOnSale(false);
+    setSaleDiscountPercent(0);
+    setSizeInventory({
+      "Small (S)": 5,
+      "Medium (M)": 10,
+      "Large (L)": 10,
+      "Extra Large (XL)": 5,
+      "Customized Size": 99,
+    });
     setImages([]);
     setNewImageUrl("");
     setEditingProduct(null);
@@ -110,14 +149,30 @@ export default function AdminProductsPage() {
     setName(p.name);
     setSubtitle(p.subtitle || "");
     setDescription(p.description || "");
-    setCategorySlug(p.categorySlug || "women");
+    const cat = p.categorySlug || p.category || "women";
+    setCategorySlug(cat);
     setPrice(p.price);
     setCompareAtPrice(p.compareAtPrice || 0);
-    setStock(p.stock || 20);
+    setStock(typeof p.stock === "number" ? p.stock : 20);
     setFabric(p.fabric || "");
     setIsNewArrival(Boolean(p.isNewArrival));
     setIsBestSeller(Boolean(p.isBestSeller));
     setIsOnSale(Boolean(p.isOnSale));
+    setSaleDiscountPercent(p.saleDiscountPercent || p.sale_discount_percent || 0);
+    
+    // Load size inventory or seed default
+    const existingInv = p.sizeInventory || p.size_inventory;
+    if (existingInv && Object.keys(existingInv).length > 0) {
+      setSizeInventory(existingInv);
+    } else {
+      const defaultSizes = getAvailableSizesForCategory(cat);
+      const seeded: Record<string, number> = {};
+      defaultSizes.forEach((s) => {
+        seeded[s] = Math.max(1, Math.floor((p.stock || 20) / defaultSizes.length));
+      });
+      setSizeInventory(seeded);
+    }
+
     setImages(p.images && p.images.length > 0 ? [...p.images].slice(0, 7) : []);
     setNewImageUrl("");
     setShowAddModal(true);
@@ -230,6 +285,8 @@ export default function AdminProductsPage() {
       isNewArrival,
       isBestSeller,
       isOnSale,
+      saleDiscountPercent: Number(saleDiscountPercent) || 0,
+      sizeInventory,
       images,
     });
 
@@ -264,6 +321,8 @@ export default function AdminProductsPage() {
       price: product.price,
       stock: product.stock,
       isOnSale: newSale,
+      saleDiscountPercent: product.saleDiscountPercent || 0,
+      sizeInventory: product.sizeInventory || {},
       images: product.images || [],
     });
   };
@@ -415,22 +474,65 @@ export default function AdminProductsPage() {
                     </td>
 
                     <td className="py-3 px-4">
-                      <p className="font-semibold text-[#151007]">{formatPrice(p.price)}</p>
-                      {p.compareAtPrice && (
-                        <p className="text-[10px] text-[#3A2E21]/60 line-through">
-                          {formatPrice(p.compareAtPrice)}
-                        </p>
+                      {p.saleDiscountPercent && p.saleDiscountPercent > 0 ? (
+                        <div>
+                          <div className="flex items-center gap-1.5">
+                            <p className="font-bold text-[#151007]">
+                              {formatPrice(Math.round(p.price * (1 - p.saleDiscountPercent / 100)))}
+                            </p>
+                            <span className="px-1 py-0.2 text-[9px] font-bold bg-red-100 text-red-800 border border-red-200">
+                              {p.saleDiscountPercent}% OFF
+                            </span>
+                          </div>
+                          <p className="text-[10px] text-[#3A2E21]/60 line-through">
+                            {formatPrice(p.price)}
+                          </p>
+                        </div>
+                      ) : (
+                        <div>
+                          <p className="font-semibold text-[#151007]">{formatPrice(p.price)}</p>
+                          {p.compareAtPrice && (
+                            <p className="text-[10px] text-[#3A2E21]/60 line-through">
+                              {formatPrice(p.compareAtPrice)}
+                            </p>
+                          )}
+                        </div>
                       )}
                     </td>
 
                     <td className="py-3 px-4">
-                      <span
-                        className={`font-medium ${
-                          p.stock < 10 ? "text-amber-800" : "text-[#151007]"
-                        }`}
-                      >
-                        {p.stock} units
-                      </span>
+                      <div className="space-y-1">
+                        <span
+                          className={`inline-block font-semibold ${
+                            p.stock <= 0
+                              ? "text-red-700 bg-red-50 px-1.5 py-0.5 border border-red-200 text-[10px] uppercase tracking-wider"
+                              : p.stock < 10
+                              ? "text-amber-800"
+                              : "text-[#151007]"
+                          }`}
+                        >
+                          {p.stock <= 0 ? "Out of Stock" : `${p.stock} units`}
+                        </span>
+
+                        {p.sizeInventory && Object.keys(p.sizeInventory).length > 0 && (
+                          <div className="text-[9px] max-w-[140px] leading-tight">
+                            {Object.entries(p.sizeInventory).some(([_, qty]) => Number(qty) <= 0) ? (
+                              <span className="text-red-700 font-medium">
+                                Some sizes OOS (
+                                {
+                                  Object.entries(p.sizeInventory)
+                                    .filter(([_, qty]) => Number(qty) <= 0)
+                                    .map(([sz]) => sz.split(" ")[0])
+                                    .join(", ")
+                                }
+                                )
+                              </span>
+                            ) : (
+                              <span className="text-emerald-700 font-medium">All sizes in stock</span>
+                            )}
+                          </div>
+                        )}
+                      </div>
                     </td>
 
                     <td className="py-3 px-4">
@@ -571,9 +673,20 @@ export default function AdminProductsPage() {
                   </label>
                   <select
                     value={categorySlug}
-                    onChange={(e) =>
-                      setCategorySlug(e.target.value as "women" | "girls" | "family")
-                    }
+                    onChange={(e) => {
+                      const newCat = e.target.value as "women" | "girls" | "family";
+                      setCategorySlug(newCat);
+                      const available = getAvailableSizesForCategory(newCat);
+                      setSizeInventory((prev) => {
+                        const updated: Record<string, number> = { ...prev };
+                        available.forEach((s) => {
+                          if (updated[s] === undefined) {
+                            updated[s] = 5;
+                          }
+                        });
+                        return updated;
+                      });
+                    }}
                     className="w-full bg-[#FAF7F2] border border-[#D8C9B6] p-2 focus:outline-none focus:border-[#907553]"
                   >
                     <option value="women">Women Collection</option>
@@ -624,7 +737,7 @@ export default function AdminProductsPage() {
 
                 <div className="space-y-1">
                   <label className="block text-[11px] uppercase tracking-wider text-[#151007] font-medium">
-                    Stock Quantity
+                    Total Stock Quantity (Auto-Calculated)
                   </label>
                   <input
                     type="number"
@@ -632,6 +745,115 @@ export default function AdminProductsPage() {
                     onChange={(e) => setStock(Number(e.target.value))}
                     className="w-full bg-[#FAF7F2] border border-[#D8C9B6] p-2 focus:outline-none focus:border-[#907553]"
                   />
+                </div>
+              </div>
+
+              {/* Size-Wise Inventory & Stock Management */}
+              <div className="space-y-3 pt-2 border-t border-[#D8C9B6]/60">
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+                  <div>
+                    <label className="block text-[11px] uppercase tracking-wider text-[#151007] font-semibold">
+                      Size-Wise Stock Quantity &amp; Availability
+                    </label>
+                    <p className="text-[11px] text-[#3A2E21]/70">
+                      Specify stock per size. Setting quantity to 0 will mark that size as &quot;OUT OF STOCK&quot; on the website.
+                    </p>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <button
+                      type="button"
+                      onClick={() => {
+                        const available = getAvailableSizesForCategory(categorySlug);
+                        const updated = { ...sizeInventory };
+                        available.forEach((s) => {
+                          updated[s] = 10;
+                        });
+                        setSizeInventory(updated);
+                        setStock(available.length * 10);
+                      }}
+                      className="text-[10px] uppercase font-sans font-medium px-2 py-1 bg-[#F2EAE0] border border-[#D8C9B6] text-[#907553] hover:border-[#907553] cursor-pointer"
+                    >
+                      Set 10 Each
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        const available = getAvailableSizesForCategory(categorySlug);
+                        const updated = { ...sizeInventory };
+                        available.forEach((s) => {
+                          updated[s] = 0;
+                        });
+                        setSizeInventory(updated);
+                        setStock(0);
+                      }}
+                      className="text-[10px] uppercase font-sans font-medium px-2 py-1 bg-red-50 border border-red-200 text-red-700 hover:bg-red-100 cursor-pointer"
+                    >
+                      Mark All OOS (0)
+                    </button>
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 bg-[#F7F1E8] p-3 border border-[#D8C9B6] max-h-56 overflow-y-auto">
+                  {getAvailableSizesForCategory(categorySlug).map((sz) => {
+                    const currentQty = sizeInventory[sz] ?? 5;
+                    const isOos = currentQty <= 0;
+                    return (
+                      <div
+                        key={sz}
+                        className={`flex items-center justify-between p-2 border transition-colors ${
+                          isOos
+                            ? "bg-red-50/70 border-red-300"
+                            : "bg-[#FAF7F2] border-[#D8C9B6]"
+                        }`}
+                      >
+                        <div className="flex-1 mr-2 min-w-0">
+                          <p className="text-xs font-sans font-medium text-[#151007] truncate">
+                            {sz}
+                          </p>
+                          <span
+                            className={`text-[9px] font-sans font-semibold uppercase tracking-wider ${
+                              isOos ? "text-red-700 font-bold" : "text-emerald-700"
+                            }`}
+                          >
+                            {isOos ? "● OUT OF STOCK (0)" : `● In Stock: ${currentQty}`}
+                          </span>
+                        </div>
+
+                        <div className="flex items-center gap-1.5 shrink-0">
+                          <input
+                            type="number"
+                            min="0"
+                            value={currentQty}
+                            onChange={(e) => {
+                              const val = Math.max(0, parseInt(e.target.value) || 0);
+                              const updated = { ...sizeInventory, [sz]: val };
+                              setSizeInventory(updated);
+                              const total = Object.values(updated).reduce((acc, c) => acc + (c || 0), 0);
+                              setStock(total);
+                            }}
+                            className="w-16 bg-[#FAF7F2] border border-[#D8C9B6] p-1 text-xs text-center font-mono focus:outline-none focus:border-[#907553]"
+                          />
+                          <button
+                            type="button"
+                            onClick={() => {
+                              const nextVal = isOos ? 5 : 0;
+                              const updated = { ...sizeInventory, [sz]: nextVal };
+                              setSizeInventory(updated);
+                              const total = Object.values(updated).reduce((acc, c) => acc + (c || 0), 0);
+                              setStock(total);
+                            }}
+                            className={`text-[9px] px-1.5 py-1 border font-sans uppercase tracking-wider cursor-pointer ${
+                              isOos
+                                ? "bg-emerald-100 text-emerald-800 border-emerald-300 hover:bg-emerald-200"
+                                : "bg-red-100 text-red-800 border-red-300 hover:bg-red-200"
+                            }`}
+                          >
+                            {isOos ? "+ Stock" : "Make 0"}
+                          </button>
+                        </div>
+                      </div>
+                    );
+                  })}
                 </div>
               </div>
 
@@ -799,8 +1021,103 @@ export default function AdminProductsPage() {
                 </div>
               </div>
 
-              {/* Toggles */}
-              <div className="grid grid-cols-3 gap-3 p-3 bg-[#F7F1E8] border border-[#D8C9B6]">
+              {/* Sale & Custom Discount Percentage */}
+              <div className="space-y-3 p-3.5 bg-[#F7F1E8] border border-[#D8C9B6]">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-2">
+                    <label className="flex items-center gap-2 cursor-pointer">
+                      <input
+                        type="checkbox"
+                        checked={isOnSale}
+                        onChange={(e) => {
+                          const checked = e.target.checked;
+                          setIsOnSale(checked);
+                          if (!checked) setSaleDiscountPercent(0);
+                          else if (saleDiscountPercent === 0) setSaleDiscountPercent(20);
+                        }}
+                        className="accent-[#907553] w-4 h-4"
+                      />
+                      <span className="font-semibold text-xs uppercase tracking-wider text-red-800">
+                        Enable Sale / Discount On This Product
+                      </span>
+                    </label>
+                  </div>
+                  {saleDiscountPercent > 0 && (
+                    <span className="text-xs font-bold px-2.5 py-0.5 bg-red-100 text-red-800 border border-red-300">
+                      {saleDiscountPercent}% OFF
+                    </span>
+                  )}
+                </div>
+
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-2 border-t border-[#D8C9B6]/60">
+                  <div className="space-y-1.5">
+                    <label className="block text-[10px] uppercase tracking-wider text-[#3A2E21] font-medium">
+                      Custom Discount Percentage (% OFF)
+                    </label>
+                    <div className="flex items-center gap-2">
+                      <input
+                        type="number"
+                        min="0"
+                        max="99"
+                        value={saleDiscountPercent}
+                        onChange={(e) => {
+                          const val = Math.min(99, Math.max(0, parseInt(e.target.value) || 0));
+                          setSaleDiscountPercent(val);
+                          setIsOnSale(val > 0);
+                        }}
+                        placeholder="e.g. 30 or 50"
+                        className="w-24 bg-[#FAF7F2] border border-[#D8C9B6] p-1.5 text-xs text-center font-bold focus:outline-none focus:border-[#907553]"
+                      />
+                      <span className="text-xs font-sans text-[#3A2E21] font-semibold">% OFF</span>
+
+                      <div className="flex items-center gap-1 ml-auto">
+                        {[15, 25, 30, 50].map((pct) => (
+                          <button
+                            key={pct}
+                            type="button"
+                            onClick={() => {
+                              setSaleDiscountPercent(pct);
+                              setIsOnSale(true);
+                            }}
+                            className={`px-2 py-1 text-[10px] font-sans border cursor-pointer ${
+                              saleDiscountPercent === pct
+                                ? "bg-[#907553] text-[#FAF7F2] border-[#907553] font-bold"
+                                : "bg-[#FAF7F2] text-[#3A2E21] border-[#D8C9B6] hover:border-[#907553]"
+                            }`}
+                          >
+                            {pct}%
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className="flex flex-col justify-center text-xs font-sans p-2.5 bg-[#FAF7F2] border border-[#D8C9B6]">
+                    {price > 0 && saleDiscountPercent > 0 ? (
+                      <div className="space-y-0.5">
+                        <p className="text-[10px] text-[#3A2E21]/70 uppercase tracking-wider">
+                          Live Price on Client Website:
+                        </p>
+                        <div className="flex items-baseline gap-2">
+                          <span className="text-base font-bold text-[#151007]">
+                            Rs. {Math.round(price * (1 - saleDiscountPercent / 100)).toLocaleString()}
+                          </span>
+                          <span className="text-xs line-through text-[#3A2E21]/60">
+                            Rs. {price.toLocaleString()}
+                          </span>
+                        </div>
+                      </div>
+                    ) : (
+                      <p className="text-[#3A2E21]/70 text-[11px]">
+                        Regular Price: <strong className="text-[#151007]">Rs. {(price || 0).toLocaleString()}</strong>
+                      </p>
+                    )}
+                  </div>
+                </div>
+              </div>
+
+              {/* Other Badges */}
+              <div className="grid grid-cols-2 gap-3 p-3 bg-[#F7F1E8] border border-[#D8C9B6]">
                 <label className="flex items-center gap-2 cursor-pointer">
                   <input
                     type="checkbox"
@@ -808,7 +1125,7 @@ export default function AdminProductsPage() {
                     onChange={(e) => setIsNewArrival(e.target.checked)}
                     className="accent-[#151007]"
                   />
-                  <span>New Arrival</span>
+                  <span>New Arrival Badge</span>
                 </label>
 
                 <label className="flex items-center gap-2 cursor-pointer">
@@ -818,17 +1135,7 @@ export default function AdminProductsPage() {
                     onChange={(e) => setIsBestSeller(e.target.checked)}
                     className="accent-[#151007]"
                   />
-                  <span>Best Seller</span>
-                </label>
-
-                <label className="flex items-center gap-2 cursor-pointer">
-                  <input
-                    type="checkbox"
-                    checked={isOnSale}
-                    onChange={(e) => setIsOnSale(e.target.checked)}
-                    className="accent-[#907553]"
-                  />
-                  <span className="font-semibold text-red-800">On Sale</span>
+                  <span>Best Seller Badge</span>
                 </label>
               </div>
 

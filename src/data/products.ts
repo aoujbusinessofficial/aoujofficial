@@ -39,7 +39,7 @@ export interface Product {
   originalPrice?: number;
   category: ProductCategory;
   collection?: string;
-  badge?: "NEW" | "BEST SELLER" | "SALE";
+  badge?: "NEW" | "BEST SELLER" | "SALE" | string;
   images: string[];
   colors: ProductColor[];
   sizes: string[];
@@ -50,6 +50,9 @@ export interface Product {
   fabric: string;
   details: string[];
   isWishlisted?: boolean;
+  stock?: number;
+  sizeInventory?: Record<string, number>;
+  saleDiscountPercent?: number;
 }
 
 // All demo/mock products removed. Products are loaded dynamically from Supabase database.

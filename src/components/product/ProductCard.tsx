@@ -24,8 +24,28 @@ export const ProductCard: React.FC<ProductCardProps> = ({ product, className = "
 
   const hasSecondImage = product.images.length > 1;
 
-  const formattedPrice = formatPrice(product.price);
-  const formattedOriginalPrice = product.originalPrice ? formatPrice(product.originalPrice) : null;
+  // Check out of stock status
+  const isSoldOut =
+    typeof product.stock === "number" && product.stock <= 0;
+
+  // Calculate discount
+  const hasDiscount = Boolean(product.saleDiscountPercent && product.saleDiscountPercent > 0);
+  const currentPrice = hasDiscount
+    ? Math.round(product.price * (1 - (product.saleDiscountPercent || 0) / 100))
+    : product.price;
+
+  const formattedPrice = formatPrice(currentPrice);
+  const formattedOriginalPrice = hasDiscount
+    ? formatPrice(product.price)
+    : product.originalPrice
+    ? formatPrice(product.originalPrice)
+    : null;
+
+  const displayBadge = isSoldOut
+    ? "SOLD OUT"
+    : hasDiscount
+    ? `${product.saleDiscountPercent}% OFF`
+    : product.badge;
 
   const sizeSummary =
     product.category === "girls"
@@ -86,9 +106,9 @@ export const ProductCard: React.FC<ProductCardProps> = ({ product, className = "
         </Link>
 
         {/* Badge in Top Left (Outside Link) */}
-        {product.badge && (
+        {displayBadge && (
           <div className="absolute top-2.5 left-2.5 z-10 pointer-events-none">
-            <ProductBadge type={product.badge} />
+            <ProductBadge type={displayBadge} />
           </div>
         )}
 
